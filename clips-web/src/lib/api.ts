@@ -1,6 +1,6 @@
 import type { Campaign, Submission, DashboardData, TransactionRecord, CreateCampaignRequest, CreateSubmissionRequest } from './types';
 
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3100';
+const API_BASE = import.meta.env.VITE_API_URL || 'https://api.clips.divine.video';
 
 function getToken(): string | null {
   if (typeof window === 'undefined') return null;
