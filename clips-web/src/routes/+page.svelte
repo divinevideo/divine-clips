@@ -3,7 +3,7 @@
 	import { feedEvents, addFeedEvent } from '$lib/stores/feed';
 	import { connectToFeed } from '$lib/nostr';
 	import { api } from '$lib/api';
-	import { formatSats, timeAgo } from '$lib/utils';
+	import { formatSats, formatMoney, formatCpm, formatMoneyFull, timeAgo } from '$lib/utils';
 	import type { Campaign } from '$lib/types';
 
 	const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3100';
@@ -119,7 +119,7 @@
 						<p class="text-white text-sm font-medium">
 							New campaign: <span class="text-purple-300">{truncateTitle(event.title ?? 'Untitled')}</span>
 							{#if event.cpm_sats}
-								— <span class="text-yellow-400">{formatSats(event.cpm_sats)}/1K views</span>
+								— <span class="text-yellow-400">{formatCpm(event.cpm_sats)}</span>
 							{/if}
 						</p>
 						{#if event.created_at}
@@ -154,8 +154,8 @@
 								{truncateTitle(campaign.title)}
 							</p>
 							<p class="text-gray-500 text-xs mt-0.5">
-								<span class="text-yellow-400">{formatSats(campaign.cpm_sats)}/1K views</span>
-								· {formatSats(campaign.budget_remaining_sats)} remaining
+								<span class="text-yellow-400">{formatCpm(campaign.cpm_sats)}</span>
+								· {formatMoney(campaign.budget_remaining_sats)} remaining
 								· {timeAgo(campaign.created_at)}
 							</p>
 						</div>

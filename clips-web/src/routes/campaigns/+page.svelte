@@ -1,6 +1,6 @@
 <script lang="ts">
   import type { PageData } from './$types';
-  import { budgetPercent, platformLabel, timeAgo, formatSats } from '$lib/utils';
+  import { budgetPercent, platformLabel, timeAgo, formatSats, formatMoney, formatCpm, formatMoneyFull } from '$lib/utils';
 
   let { data }: { data: PageData } = $props();
 
@@ -44,7 +44,7 @@
             <h2 class="text-lg font-bold text-white mb-1 leading-tight">{campaign.title}</h2>
 
             <p class="text-sm text-gray-400 mb-3">
-              <span class="text-yellow-400 font-semibold">{campaign.cpm_sats.toLocaleString()} sats</span>
+              <span class="text-yellow-400 font-semibold">{formatCpm(campaign.cpm_sats)}</span>
               <span class="text-gray-500"> / 1K views</span>
             </p>
 
@@ -60,7 +60,7 @@
                   style="width: {pct}%"
                 ></div>
               </div>
-              <p class="text-xs text-gray-500 mt-1">{formatSats(campaign.budget_remaining_sats)} remaining</p>
+              <p class="text-xs text-gray-500 mt-1">{formatMoneyFull(campaign.budget_remaining_sats)} remaining</p>
             </div>
 
             <!-- Platform badges -->

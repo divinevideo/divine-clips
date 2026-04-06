@@ -254,7 +254,7 @@
 	<section class="mb-12 bg-gray-900 rounded-xl border border-gray-800 p-8">
 		<h2 class="text-2xl font-bold text-white mb-4">Clip Any DiVine Video</h2>
 		<p class="text-gray-300 leading-relaxed mb-4">
-			You don't need a campaign to start clipping. Every video on DiVine is eligible for sharing at a base rate of <strong class="text-yellow-400">1,000 sats per 1,000 views</strong> (~$1 CPM), funded by the DiVine platform itself.
+			You don't need a campaign to start clipping. Every video on DiVine is eligible for sharing at a base rate of <strong class="text-yellow-400">$1.00 per 1,000 views</strong>, funded by the DiVine platform itself. Payments are made in Bitcoin (via Lightning), automatically converted at the current exchange rate.
 		</p>
 		<p class="text-gray-300 leading-relaxed mb-4">
 			Browse <a href="https://divine.video" class="text-purple-400 hover:underline">divine.video</a>, find a loop you love, download it, post it, and submit the link. That's it. When creators set up their own campaigns with higher rates, you'll earn even more.
