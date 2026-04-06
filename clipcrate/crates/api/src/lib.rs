@@ -37,10 +37,11 @@ pub fn router(state: AppState) -> Router {
         .allow_headers(Any);
 
     Router::new()
-        .route("/campaigns", post(campaigns::create_campaign))
-        .route("/campaigns", get(campaigns::list_campaigns))
-        .route("/campaigns/{id}", get(campaigns::get_campaign))
-        .route("/campaigns/{id}", patch(campaigns::update_campaign))
+        .route("/health", get(|| async { "ok" }))
+        .route("/api/campaigns", post(campaigns::create_campaign))
+        .route("/api/campaigns", get(campaigns::list_campaigns))
+        .route("/api/campaigns/{id}", get(campaigns::get_campaign))
+        .route("/api/campaigns/{id}", patch(campaigns::update_campaign))
         .route("/api/submissions", post(submissions::create_submission))
         .route("/api/submissions", get(submissions::list_submissions))
         .route("/api/submissions/{id}", get(submissions::get_submission))
