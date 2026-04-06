@@ -58,10 +58,10 @@
 			The DiVine Clip Market
 		</h1>
 		<p class="text-xl sm:text-2xl text-purple-200 mb-3 font-medium">
-			Spread the divine message across social media
+			Help grow DiVine by sharing videos everywhere
 		</p>
 		<p class="text-gray-400 mb-10 max-w-xl mx-auto">
-			Share DiVine's 6-second loops on TikTok, Reels, Shorts, and X. Help the world discover a new kind of video &mdash; and earn sats for every view.
+			Take DiVine's 6-second loops and share them on TikTok, Reels, Shorts, and X. Every view you bring helps build something new &mdash; a human-only video platform owned by its community. And you earn sats for every verified view.
 		</p>
 		<div class="flex flex-col sm:flex-row gap-4 justify-center">
 			<a
@@ -84,16 +84,16 @@
 <section class="mb-12">
 	<div class="grid grid-cols-1 sm:grid-cols-3 gap-6 max-w-3xl mx-auto text-center">
 		<div class="bg-gray-900 rounded-xl p-6 border border-gray-800">
-			<div class="text-3xl font-bold text-purple-400 mb-1">6 seconds</div>
-			<div class="text-gray-400 text-sm">The format that makes people stop scrolling</div>
+			<div class="text-3xl font-bold text-purple-400 mb-1">Share</div>
+			<div class="text-gray-400 text-sm">Pick DiVine videos you love and post them on your platforms</div>
 		</div>
 		<div class="bg-gray-900 rounded-xl p-6 border border-gray-800">
-			<div class="text-3xl font-bold text-purple-400 mb-1">Bitcoin</div>
-			<div class="text-gray-400 text-sm">Earn sats for every verified view</div>
+			<div class="text-3xl font-bold text-purple-400 mb-1">Grow</div>
+			<div class="text-gray-400 text-sm">Every view brings new people to DiVine and the community you're building</div>
 		</div>
 		<div class="bg-gray-900 rounded-xl p-6 border border-gray-800">
-			<div class="text-3xl font-bold text-purple-400 mb-1">Everywhere</div>
-			<div class="text-gray-400 text-sm">TikTok, Reels, Shorts, and X</div>
+			<div class="text-3xl font-bold text-purple-400 mb-1">Earn</div>
+			<div class="text-gray-400 text-sm">Get paid in Bitcoin for every verified view your clips generate</div>
 		</div>
 	</div>
 </section>
@@ -175,10 +175,10 @@
 <!-- Social Proof Footer Banner -->
 <section class="mt-16 text-center py-10 border-t border-gray-800">
 	<p class="text-gray-400 text-lg">
-		The best content spreads through people, not algorithms. Help DiVine grow &mdash; one clip at a time.
+		DiVine is human-only, community-owned video. The best way to grow it is through people like you sharing content they believe in.
 	</p>
 	<a href="/campaigns" class="mt-4 inline-block text-purple-400 hover:text-purple-300 text-sm font-medium transition-colors">
-		Start clipping &rarr;
+		Find videos to share &rarr;
 	</a>
 </section>
 
