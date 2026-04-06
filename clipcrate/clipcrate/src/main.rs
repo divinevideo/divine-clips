@@ -30,6 +30,12 @@ async fn main() -> anyhow::Result<()> {
         clickhouse,
         cashu_wallet,
     };
+
+    let db_for_auto = state.db.clone();
+    tokio::spawn(async move {
+        clipcrate_api::auto_campaigns::run_auto_campaign_listener(db_for_auto).await;
+    });
+
     let app = clipcrate_api::router(state);
 
     let addr = format!("0.0.0.0:{}", port);

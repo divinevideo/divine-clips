@@ -3,6 +3,7 @@
 // for managing video campaigns and content creator submissions.
 
 pub mod auth;
+pub mod auto_campaigns;
 pub mod campaigns;
 pub mod dashboard;
 pub mod error;

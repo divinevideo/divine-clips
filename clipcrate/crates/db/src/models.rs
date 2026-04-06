@@ -79,3 +79,13 @@ pub struct Withdrawal {
     pub status: String,
     pub created_at: DateTime<Utc>,
 }
+
+#[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
+pub struct PushSubscription {
+    pub id: Uuid,
+    pub clipper_pubkey: String,
+    pub endpoint: String,
+    pub p256dh: String,
+    pub auth: String,
+    pub created_at: DateTime<Utc>,
+}
