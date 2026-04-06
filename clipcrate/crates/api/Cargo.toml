@@ -21,3 +21,4 @@ clipcrate-db = { workspace = true }
 clipcrate-nostr = { workspace = true }
 clipcrate-cashu = { workspace = true }
 clipcrate-trust = { workspace = true }
+url = { workspace = true }

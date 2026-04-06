@@ -4,7 +4,7 @@ use sqlx::postgres::PgPoolOptions;
 use sqlx::PgPool;
 use uuid::Uuid;
 
-use crate::models::Campaign;
+use crate::models::{Campaign, Clipper, Submission};
 
 pub async fn create_pool(database_url: &str) -> Result<PgPool> {
     let pool = PgPoolOptions::new()
@@ -102,4 +102,94 @@ pub async fn update_campaign_status(
     .await?;
 
     Ok(campaign)
+}
+
+pub async fn get_or_create_clipper(pool: &PgPool, pubkey: &str) -> Result<Clipper> {
+    let clipper = sqlx::query_as::<_, Clipper>(
+        r#"
+        INSERT INTO clippers (pubkey)
+        VALUES ($1)
+        ON CONFLICT (pubkey) DO UPDATE
+            SET pubkey = EXCLUDED.pubkey
+        RETURNING *
+        "#,
+    )
+    .bind(pubkey)
+    .fetch_one(pool)
+    .await?;
+
+    Ok(clipper)
+}
+
+pub async fn create_submission(
+    pool: &PgPool,
+    campaign_id: Uuid,
+    clipper_pubkey: &str,
+    external_url: &str,
+    platform: &str,
+) -> Result<Submission> {
+    let submission = sqlx::query_as::<_, Submission>(
+        r#"
+        INSERT INTO submissions (campaign_id, clipper_pubkey, external_url, platform, status)
+        VALUES ($1, $2, $3, $4, 'pending')
+        RETURNING *
+        "#,
+    )
+    .bind(campaign_id)
+    .bind(clipper_pubkey)
+    .bind(external_url)
+    .bind(platform)
+    .fetch_one(pool)
+    .await?;
+
+    Ok(submission)
+}
+
+pub async fn list_clipper_submissions(
+    pool: &PgPool,
+    clipper_pubkey: &str,
+    limit: i64,
+    offset: i64,
+) -> Result<Vec<Submission>> {
+    let submissions = sqlx::query_as::<_, Submission>(
+        r#"
+        SELECT * FROM submissions
+        WHERE clipper_pubkey = $1
+        ORDER BY submitted_at DESC
+        LIMIT $2 OFFSET $3
+        "#,
+    )
+    .bind(clipper_pubkey)
+    .bind(limit)
+    .bind(offset)
+    .fetch_all(pool)
+    .await?;
+
+    Ok(submissions)
+}
+
+pub async fn get_submission(pool: &PgPool, id: Uuid) -> Result<Option<Submission>> {
+    let submission = sqlx::query_as::<_, Submission>(
+        "SELECT * FROM submissions WHERE id = $1",
+    )
+    .bind(id)
+    .fetch_optional(pool)
+    .await?;
+
+    Ok(submission)
+}
+
+pub async fn count_active_submissions(pool: &PgPool, clipper_pubkey: &str) -> Result<i64> {
+    let row: (i64,) = sqlx::query_as(
+        r#"
+        SELECT COUNT(*) FROM submissions
+        WHERE clipper_pubkey = $1
+          AND status IN ('pending', 'active')
+        "#,
+    )
+    .bind(clipper_pubkey)
+    .fetch_one(pool)
+    .await?;
+
+    Ok(row.0)
 }

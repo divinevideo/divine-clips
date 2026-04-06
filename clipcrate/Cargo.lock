@@ -510,6 +510,7 @@ dependencies = [
  "tower",
  "tower-http",
  "tracing",
+ "url",
  "uuid",
 ]
 
@@ -518,13 +519,11 @@ name = "clipcrate-cashu"
 version = "0.1.0"
 dependencies = [
  "anyhow",
- "reqwest",
+ "chrono",
  "serde",
  "serde_json",
- "thiserror 2.0.18",
- "tokio",
+ "sqlx",
  "tracing",
- "url",
  "uuid",
 ]
 
@@ -567,12 +566,9 @@ name = "clipcrate-platform-apis"
 version = "0.1.0"
 dependencies = [
  "anyhow",
- "futures",
  "reqwest",
  "serde",
  "serde_json",
- "thiserror 2.0.18",
- "tokio",
  "tracing",
  "url",
 ]

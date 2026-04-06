@@ -28,5 +28,8 @@ pub fn router(state: AppState) -> Router {
         .route("/campaigns", get(campaigns::list_campaigns))
         .route("/campaigns/{id}", get(campaigns::get_campaign))
         .route("/campaigns/{id}", patch(campaigns::update_campaign))
+        .route("/api/submissions", post(submissions::create_submission))
+        .route("/api/submissions", get(submissions::list_submissions))
+        .route("/api/submissions/{id}", get(submissions::get_submission))
         .with_state(state)
 }
