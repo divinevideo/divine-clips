@@ -86,6 +86,12 @@
 						Dashboard
 					</a>
 					<a
+						href="/leaderboard"
+						class="px-3 py-2 rounded-md text-sm font-medium transition-colors {isActive('/leaderboard') ? 'bg-purple-600 text-white' : 'text-gray-300 hover:text-white hover:bg-gray-800'}"
+					>
+						Leaderboard
+					</a>
+					<a
 						href="/wallet"
 						class="px-3 py-2 rounded-md text-sm font-medium transition-colors {isActive('/wallet') ? 'bg-purple-600 text-white' : 'text-gray-300 hover:text-white hover:bg-gray-800'}"
 					>
@@ -165,6 +171,13 @@
 					class="block px-3 py-2 rounded-md text-sm font-medium transition-colors {isActive('/dashboard') ? 'bg-purple-600 text-white' : 'text-gray-300 hover:text-white hover:bg-gray-800'}"
 				>
 					Dashboard
+				</a>
+				<a
+					href="/leaderboard"
+					onclick={() => { mobileMenuOpen = false; }}
+					class="block px-3 py-2 rounded-md text-sm font-medium transition-colors {isActive('/leaderboard') ? 'bg-purple-600 text-white' : 'text-gray-300 hover:text-white hover:bg-gray-800'}"
+				>
+					Leaderboard
 				</a>
 				<a
 					href="/wallet"

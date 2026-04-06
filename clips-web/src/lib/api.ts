@@ -32,6 +32,14 @@ export const api = {
     create: (data: CreateSubmissionRequest) => apiFetch<Submission>('/api/submissions', { method: 'POST', body: JSON.stringify(data) }),
   },
   dashboard: () => apiFetch<DashboardData>('/api/dashboard'),
+  leaderboard: (metric = 'earnings', period = 'week', limit = 50) =>
+    apiFetch<{ pubkey: string; trust_level: number; value: number }[]>(
+      `/api/leaderboard?metric=${metric}&period=${period}&limit=${limit}`
+    ),
+  socialProof: () =>
+    apiFetch<{ clippers_this_week: number; sats_earned_this_week: number }>(
+      '/api/stats/social-proof'
+    ),
   wallet: {
     balance: () => apiFetch<{ balance_sats: number }>('/api/wallet/balance'),
     withdraw: (invoice: string, amount_sats: number) => apiFetch<{ status: string; amount_sats: number }>('/api/wallet/withdraw', { method: 'POST', body: JSON.stringify({ invoice, amount_sats }) }),
