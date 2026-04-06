@@ -1,0 +1,9 @@
+name = "clips-verifier"
+main = "src/index.ts"
+compatibility_date = "2025-01-01"
+
+[triggers]
+crons = ["0 */6 * * *"]
+
+[vars]
+CLIPCRATE_API_URL = "https://clipcrate.divine.video"
