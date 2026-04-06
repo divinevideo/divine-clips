@@ -1,0 +1,12 @@
+/Users/rabble/code/divine/divine-clips/clipcrate/target/debug/deps/thiserror-2b13239917603983.d: /Users/rabble/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/thiserror-2.0.18/src/lib.rs /Users/rabble/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/thiserror-2.0.18/src/aserror.rs /Users/rabble/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/thiserror-2.0.18/src/display.rs /Users/rabble/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/thiserror-2.0.18/src/var.rs /Users/rabble/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/thiserror-2.0.18/src/private.rs /Users/rabble/code/divine/divine-clips/clipcrate/target/debug/build/thiserror-c60931e4e8dce25d/out/private.rs
+
+/Users/rabble/code/divine/divine-clips/clipcrate/target/debug/deps/libthiserror-2b13239917603983.rmeta: /Users/rabble/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/thiserror-2.0.18/src/lib.rs /Users/rabble/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/thiserror-2.0.18/src/aserror.rs /Users/rabble/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/thiserror-2.0.18/src/display.rs /Users/rabble/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/thiserror-2.0.18/src/var.rs /Users/rabble/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/thiserror-2.0.18/src/private.rs /Users/rabble/code/divine/divine-clips/clipcrate/target/debug/build/thiserror-c60931e4e8dce25d/out/private.rs
+
+/Users/rabble/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/thiserror-2.0.18/src/lib.rs:
+/Users/rabble/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/thiserror-2.0.18/src/aserror.rs:
+/Users/rabble/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/thiserror-2.0.18/src/display.rs:
+/Users/rabble/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/thiserror-2.0.18/src/var.rs:
+/Users/rabble/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/thiserror-2.0.18/src/private.rs:
+/Users/rabble/code/divine/divine-clips/clipcrate/target/debug/build/thiserror-c60931e4e8dce25d/out/private.rs:
+
+# env-dep:OUT_DIR=/Users/rabble/code/divine/divine-clips/clipcrate/target/debug/build/thiserror-c60931e4e8dce25d/out

@@ -1,0 +1,16 @@
+[package]
+name = "clipcrate-platform-apis"
+version = "0.1.0"
+edition = "2021"
+description = "Social platform API clients"
+
+[dependencies]
+tokio = { workspace = true }
+reqwest = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+tracing = { workspace = true }
+anyhow = { workspace = true }
+thiserror = { workspace = true }
+url = { workspace = true }
+futures = { workspace = true }

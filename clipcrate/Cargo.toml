@@ -1,0 +1,44 @@
+[workspace]
+resolver = "2"
+members = [
+    "clipcrate",
+    "crates/api",
+    "crates/db",
+    "crates/nostr_events",
+    "crates/cashu",
+    "crates/trust",
+    "crates/platform-apis",
+]
+
+[workspace.dependencies]
+axum = { version = "0.8", features = ["macros"] }
+tower = "0.5"
+tower-http = { version = "0.6", features = ["cors", "trace"] }
+tokio = { version = "1", features = ["full"] }
+sqlx = { version = "0.8", features = ["runtime-tokio", "tls-rustls", "postgres", "uuid", "chrono"] }
+clickhouse = "0.13"
+nostr = "0.37"
+nostr-sdk = "0.37"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["json", "env-filter"] }
+uuid = { version = "1", features = ["v4", "serde"] }
+chrono = { version = "0.4", features = ["serde"] }
+anyhow = "1"
+thiserror = "2"
+time = "0.3"
+url = "2"
+reqwest = { version = "0.12", features = ["json"] }
+governor = "0.8"
+futures = "0.3"
+tokio-stream = "0.1"
+async-stream = "0.3"
+
+# Internal crates
+clipcrate-api = { path = "crates/api" }
+clipcrate-db = { path = "crates/db" }
+clipcrate-nostr = { path = "crates/nostr_events" }
+clipcrate-cashu = { path = "crates/cashu" }
+clipcrate-trust = { path = "crates/trust" }
+clipcrate-platform-apis = { path = "crates/platform-apis" }

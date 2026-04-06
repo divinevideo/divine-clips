@@ -1,0 +1,18 @@
+[package]
+name = "clipcrate-nostr"
+version = "0.1.0"
+edition = "2021"
+description = "Nostr event builders and relay publisher"
+
+[dependencies]
+tokio = { workspace = true }
+nostr = { workspace = true }
+nostr-sdk = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+tracing = { workspace = true }
+anyhow = { workspace = true }
+thiserror = { workspace = true }
+futures = { workspace = true }
+tokio-stream = { workspace = true }
+async-stream = { workspace = true }

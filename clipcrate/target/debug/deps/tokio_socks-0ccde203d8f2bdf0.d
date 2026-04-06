@@ -1,0 +1,11 @@
+/Users/rabble/code/divine/divine-clips/clipcrate/target/debug/deps/tokio_socks-0ccde203d8f2bdf0.d: /Users/rabble/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tokio-socks-0.5.2/src/lib.rs /Users/rabble/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tokio-socks-0.5.2/src/error.rs /Users/rabble/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tokio-socks-0.5.2/src/io/mod.rs /Users/rabble/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tokio-socks-0.5.2/src/io/tokio.rs /Users/rabble/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tokio-socks-0.5.2/src/tcp/mod.rs /Users/rabble/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tokio-socks-0.5.2/src/tcp/socks4.rs /Users/rabble/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tokio-socks-0.5.2/src/tcp/socks5.rs
+
+/Users/rabble/code/divine/divine-clips/clipcrate/target/debug/deps/libtokio_socks-0ccde203d8f2bdf0.rmeta: /Users/rabble/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tokio-socks-0.5.2/src/lib.rs /Users/rabble/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tokio-socks-0.5.2/src/error.rs /Users/rabble/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tokio-socks-0.5.2/src/io/mod.rs /Users/rabble/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tokio-socks-0.5.2/src/io/tokio.rs /Users/rabble/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tokio-socks-0.5.2/src/tcp/mod.rs /Users/rabble/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tokio-socks-0.5.2/src/tcp/socks4.rs /Users/rabble/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tokio-socks-0.5.2/src/tcp/socks5.rs
+
+/Users/rabble/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tokio-socks-0.5.2/src/lib.rs:
+/Users/rabble/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tokio-socks-0.5.2/src/error.rs:
+/Users/rabble/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tokio-socks-0.5.2/src/io/mod.rs:
+/Users/rabble/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tokio-socks-0.5.2/src/io/tokio.rs:
+/Users/rabble/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tokio-socks-0.5.2/src/tcp/mod.rs:
+/Users/rabble/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tokio-socks-0.5.2/src/tcp/socks4.rs:
+/Users/rabble/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tokio-socks-0.5.2/src/tcp/socks5.rs:

@@ -1,0 +1,18 @@
+[package]
+name = "clipcrate-db"
+version = "0.1.0"
+edition = "2021"
+description = "Postgres and ClickHouse database clients"
+
+[dependencies]
+tokio = { workspace = true }
+sqlx = { workspace = true }
+clickhouse = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+tracing = { workspace = true }
+uuid = { workspace = true }
+chrono = { workspace = true }
+anyhow = { workspace = true }
+thiserror = { workspace = true }
+time = { workspace = true }

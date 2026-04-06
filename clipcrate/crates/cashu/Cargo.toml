@@ -1,0 +1,16 @@
+[package]
+name = "clipcrate-cashu"
+version = "0.1.0"
+edition = "2021"
+description = "Cashu mint integration for payments"
+
+[dependencies]
+tokio = { workspace = true }
+reqwest = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+tracing = { workspace = true }
+uuid = { workspace = true }
+anyhow = { workspace = true }
+thiserror = { workspace = true }
+url = { workspace = true }
