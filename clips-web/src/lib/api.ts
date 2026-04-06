@@ -25,6 +25,10 @@ export const api = {
     get: (id: string) => apiFetch<Campaign>(`/api/campaigns/${id}`),
     create: (data: CreateCampaignRequest) => apiFetch<Campaign>('/api/campaigns', { method: 'POST', body: JSON.stringify(data) }),
     update: (id: string, status: string) => apiFetch<Campaign>(`/api/campaigns/${id}`, { method: 'PATCH', body: JSON.stringify({ status }) }),
+    fund: (id: string, amount_sats: number) =>
+      apiFetch<{ invoice: string; quote_id: string; amount_sats: number }>(`/api/campaigns/${id}/fund`, { method: 'POST', body: JSON.stringify({ amount_sats }) }),
+    checkFunding: (id: string, quoteId: string) =>
+      apiFetch<{ paid: boolean; amount_credited_sats: number }>(`/api/campaigns/${id}/fund/${quoteId}`),
   },
   submissions: {
     list: (limit = 20, offset = 0) => apiFetch<Submission[]>(`/api/submissions?limit=${limit}&offset=${offset}`),

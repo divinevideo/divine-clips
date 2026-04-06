@@ -1,6 +1,9 @@
 <script lang="ts">
   import type { PageData } from './$types';
   import { budgetPercent, platformLabel, timeAgo, formatSats } from '$lib/utils';
+  import { isAuthenticated } from '$lib/stores/auth';
+  import { api } from '$lib/api';
+  import { invalidateAll } from '$app/navigation';
 
   let { data }: { data: PageData } = $props();
 
@@ -25,6 +28,80 @@
   }
 
   const pct = $derived(budgetPercent(data.campaign));
+
+  // Funding modal state
+  let showFundModal = $state(false);
+  let fundAmountSats = $state(10000);
+  let invoice = $state('');
+  let quoteId = $state('');
+  let fundingStatus = $state<'idle' | 'loading' | 'invoice' | 'polling' | 'success' | 'error'>('idle');
+  let fundingError = $state('');
+  let amountCredited = $state(0);
+  let pollTimer: ReturnType<typeof setInterval> | null = null;
+  let copied = $state(false);
+
+  function openFundModal() {
+    showFundModal = true;
+    fundingStatus = 'idle';
+    invoice = '';
+    quoteId = '';
+    fundingError = '';
+    amountCredited = 0;
+    copied = false;
+  }
+
+  function closeFundModal() {
+    showFundModal = false;
+    if (pollTimer) {
+      clearInterval(pollTimer);
+      pollTimer = null;
+    }
+  }
+
+  async function getInvoice() {
+    fundingStatus = 'loading';
+    fundingError = '';
+    try {
+      const result = await api.campaigns.fund(campaign.id, fundAmountSats);
+      invoice = result.invoice;
+      quoteId = result.quote_id;
+      fundingStatus = 'invoice';
+      startPolling();
+    } catch (err: unknown) {
+      fundingError = err instanceof Error ? err.message : 'Failed to get invoice';
+      fundingStatus = 'error';
+    }
+  }
+
+  function startPolling() {
+    fundingStatus = 'polling';
+    pollTimer = setInterval(async () => {
+      try {
+        const result = await api.campaigns.checkFunding(campaign.id, quoteId);
+        if (result.paid) {
+          fundingStatus = 'success';
+          amountCredited = result.amount_credited_sats;
+          if (pollTimer) {
+            clearInterval(pollTimer);
+            pollTimer = null;
+          }
+          await invalidateAll();
+        }
+      } catch {
+        // Silently retry on poll errors
+      }
+    }, 3000);
+  }
+
+  async function copyInvoice() {
+    try {
+      await navigator.clipboard.writeText(invoice);
+      copied = true;
+      setTimeout(() => { copied = false; }, 2000);
+    } catch {
+      // Fallback: select the text
+    }
+  }
 </script>
 
 <svelte:head>
@@ -150,5 +227,130 @@
       Claim &amp; Clip
     </a>
 
+    <!-- Fund Campaign Button -->
+    {#if $isAuthenticated}
+      <button
+        onclick={openFundModal}
+        class="block w-full text-center bg-green-600 hover:bg-green-500 text-white font-bold text-lg py-4 rounded-xl transition-colors shadow-lg shadow-green-900/30 mt-4"
+      >
+        Fund Campaign
+      </button>
+    {/if}
+
   </div>
 </div>
+
+<!-- Fund Campaign Modal -->
+{#if showFundModal}
+  <!-- svelte-ignore a11y_click_events_have_key_events -->
+  <!-- svelte-ignore a11y_no_static_element_interactions -->
+  <div
+    class="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm"
+    onclick={(e) => { if (e.target === e.currentTarget) closeFundModal(); }}
+  >
+    <div class="bg-gray-900 border border-gray-700 rounded-2xl p-6 w-full max-w-md mx-4 shadow-2xl">
+      <div class="flex items-center justify-between mb-5">
+        <h2 class="text-xl font-bold text-white">Fund Campaign</h2>
+        <button
+          onclick={closeFundModal}
+          class="text-gray-400 hover:text-white transition-colors text-2xl leading-none"
+        >&times;</button>
+      </div>
+
+      {#if fundingStatus === 'success'}
+        <!-- Success state -->
+        <div class="text-center py-6">
+          <div class="text-5xl mb-4">&#9889;</div>
+          <h3 class="text-xl font-bold text-green-400 mb-2">Payment Received!</h3>
+          <p class="text-gray-300">
+            <span class="text-yellow-400 font-bold">{amountCredited.toLocaleString()}</span> sats credited to this campaign.
+          </p>
+          <button
+            onclick={closeFundModal}
+            class="mt-6 w-full bg-purple-600 hover:bg-purple-500 text-white font-semibold py-3 rounded-xl transition-colors"
+          >
+            Done
+          </button>
+        </div>
+      {:else if fundingStatus === 'error'}
+        <!-- Error state -->
+        <div class="text-center py-4">
+          <p class="text-red-400 mb-4">{fundingError}</p>
+          <button
+            onclick={() => { fundingStatus = 'idle'; }}
+            class="w-full bg-gray-700 hover:bg-gray-600 text-white font-semibold py-3 rounded-xl transition-colors"
+          >
+            Try Again
+          </button>
+        </div>
+      {:else if fundingStatus === 'invoice' || fundingStatus === 'polling'}
+        <!-- Invoice display -->
+        <div>
+          <p class="text-sm text-gray-400 mb-3">
+            Pay <span class="text-yellow-400 font-bold">{fundAmountSats.toLocaleString()}</span> sats via Lightning:
+          </p>
+
+          <div class="relative">
+            <textarea
+              readonly
+              value={invoice}
+              class="w-full bg-gray-950 border border-gray-700 rounded-xl p-3 text-xs text-gray-300 font-mono resize-none h-28 focus:outline-none focus:border-purple-500"
+            ></textarea>
+            <button
+              onclick={copyInvoice}
+              class="absolute top-2 right-2 text-xs bg-gray-700 hover:bg-gray-600 text-gray-300 px-3 py-1 rounded-lg transition-colors"
+            >
+              {copied ? 'Copied!' : 'Copy'}
+            </button>
+          </div>
+
+          {#if fundingStatus === 'polling'}
+            <div class="flex items-center gap-2 mt-4 text-sm text-gray-400">
+              <div class="w-4 h-4 border-2 border-purple-400 border-t-transparent rounded-full animate-spin"></div>
+              Waiting for payment...
+            </div>
+          {/if}
+
+          <button
+            onclick={closeFundModal}
+            class="mt-4 w-full bg-gray-700 hover:bg-gray-600 text-white font-semibold py-3 rounded-xl transition-colors"
+          >
+            Cancel
+          </button>
+        </div>
+      {:else}
+        <!-- Amount input and get invoice -->
+        <div>
+          <label for="fund-amount" class="block text-sm text-gray-400 mb-2">Amount (sats)</label>
+          <input
+            id="fund-amount"
+            type="number"
+            min="1000"
+            step="1000"
+            bind:value={fundAmountSats}
+            class="w-full bg-gray-950 border border-gray-700 rounded-xl px-4 py-3 text-white text-lg font-mono focus:outline-none focus:border-purple-500 transition-colors mb-4"
+          />
+
+          <div class="flex gap-2 mb-4">
+            {#each [10000, 50000, 100000, 500000] as preset}
+              <button
+                onclick={() => { fundAmountSats = preset; }}
+                class="flex-1 text-xs py-2 rounded-lg transition-colors {fundAmountSats === preset ? 'bg-purple-600 text-white' : 'bg-gray-800 text-gray-400 hover:bg-gray-700'}"
+              >
+                {(preset / 1000)}k
+              </button>
+            {/each}
+          </div>
+
+          <button
+            onclick={getInvoice}
+            disabled={fundingStatus === 'loading' || fundAmountSats < 1}
+            class="w-full bg-green-600 hover:bg-green-500 disabled:bg-gray-700 disabled:text-gray-500 text-white font-bold py-3 rounded-xl transition-colors"
+          >
+            {fundingStatus === 'loading' ? 'Getting Invoice...' : 'Get Lightning Invoice'}
+          </button>
+        </div>
+      {/if}
+    </div>
+  </div>
+{/if}
