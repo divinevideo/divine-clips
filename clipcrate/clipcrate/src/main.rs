@@ -1,10 +1,7 @@
-use axum::{routing::get, Router};
 use tracing::info;
 use tracing_subscriber::{fmt, prelude::*, EnvFilter};
 
-async fn health() -> &'static str {
-    "ok"
-}
+use clipcrate_api::AppState;
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
@@ -14,7 +11,14 @@ async fn main() -> anyhow::Result<()> {
         .with(fmt::layer().json())
         .init();
 
-    let app = Router::new().route("/health", get(health));
+    let database_url = std::env::var("DATABASE_URL")
+        .unwrap_or_else(|_| "postgres://postgres:postgres@localhost:5432/clipcrate".to_string());
+
+    let pool = clipcrate_db::postgres::create_pool(&database_url).await?;
+    info!("connected to database");
+
+    let state = AppState { db: pool };
+    let app = clipcrate_api::router(state);
 
     let listener = tokio::net::TcpListener::bind("0.0.0.0:3100").await?;
     info!("clipcrate listening on 0.0.0.0:3100");

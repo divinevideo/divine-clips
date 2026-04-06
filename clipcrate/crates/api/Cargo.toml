@@ -16,6 +16,7 @@ uuid = { workspace = true }
 chrono = { workspace = true }
 anyhow = { workspace = true }
 thiserror = { workspace = true }
+sqlx = { workspace = true }
 clipcrate-db = { workspace = true }
 clipcrate-nostr = { workspace = true }
 clipcrate-cashu = { workspace = true }
