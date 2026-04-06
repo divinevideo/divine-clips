@@ -31,6 +31,7 @@ services:
       CLICKHOUSE_URL: http://clickhouse:8123
       RUST_LOG: clipcrate=debug,info
       PORT: "3100"
+      CDK_MINT_URL: http://cdk-mintd:3338
     ports:
       - "3100:3100"
     depends_on:
@@ -39,6 +40,29 @@ services:
       clickhouse:
         condition: service_started
 
+  phoenixd:
+    image: ghcr.io/acinq/phoenixd:latest
+    volumes:
+      - phoenixd_data:/data
+    ports:
+      - "9740:9740"
+
+  cdk-mintd:
+    image: ghcr.io/cashubtc/cdk-mintd:latest
+    environment:
+      CDK_MINTD_LISTEN_HOST: "0.0.0.0"
+      CDK_MINTD_LISTEN_PORT: "3338"
+      CDK_MINTD_DATABASE: "sqlite"
+      CDK_MINTD_DATABASE_PATH: "/data/mint.redb"
+    volumes:
+      - mint_data:/data
+    ports:
+      - "3338:3338"
+    depends_on:
+      - phoenixd
+
 volumes:
   pgdata:
   chdata:
+  phoenixd_data:
+  mint_data:

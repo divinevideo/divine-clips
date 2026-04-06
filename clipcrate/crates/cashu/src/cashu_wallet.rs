@@ -165,11 +165,11 @@ impl CashuWallet {
 /// Create a CashuWallet from environment variables.
 ///
 /// Reads:
-/// - `CASHU_MINT_URL` (default: "https://testnut.cashu.space")
+/// - `CDK_MINT_URL` (default: "https://testnut.cashu.space")
 /// - `CASHU_WALLET_DB_PATH` (default: "./data/cashu-wallet.db")
 /// - `CASHU_WALLET_SEED` (hex-encoded 64-byte seed; generates random if not set)
 pub async fn from_env() -> Result<CashuWallet> {
-    let mint_url = std::env::var("CASHU_MINT_URL")
+    let mint_url = std::env::var("CDK_MINT_URL")
         .unwrap_or_else(|_| "https://testnut.cashu.space".to_string());
 
     let db_path = std::env::var("CASHU_WALLET_DB_PATH")
