@@ -9,6 +9,7 @@ pub mod error;
 pub mod feed;
 pub mod funding;
 pub mod internal;
+pub mod leaderboard;
 pub mod submissions;
 pub mod wallet;
 
@@ -56,6 +57,8 @@ pub fn router(state: AppState) -> Router {
         .route("/api/wallet/withdraw", post(wallet::withdraw))
         .route("/api/wallet/history", get(wallet::get_history))
         .route("/api/dashboard", get(dashboard::get_dashboard))
+        .route("/api/leaderboard", get(leaderboard::get_leaderboard))
+        .route("/api/stats/social-proof", get(leaderboard::get_social_proof))
         .layer(cors)
         .with_state(state)
 }

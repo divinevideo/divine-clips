@@ -18,6 +18,8 @@ pub struct Campaign {
     pub expires_at: Option<DateTime<Utc>>,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
+    pub source: String,
+    pub divine_video_event_id: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
@@ -58,6 +60,13 @@ pub struct Payout {
     pub cashu_token_id: Option<String>,
     pub zap_event_id: Option<String>,
     pub created_at: DateTime<Utc>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
+pub struct LeaderboardEntry {
+    pub pubkey: String,
+    pub trust_level: i32,
+    pub value: i64,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]

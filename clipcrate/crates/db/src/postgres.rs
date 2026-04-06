@@ -4,7 +4,7 @@ use sqlx::postgres::PgPoolOptions;
 use sqlx::PgPool;
 use uuid::Uuid;
 
-use crate::models::{Campaign, Clipper, Payout, Submission};
+use crate::models::{Campaign, Clipper, LeaderboardEntry, Payout, Submission};
 
 pub async fn create_pool(database_url: &str) -> Result<PgPool> {
     let pool = PgPoolOptions::new()
@@ -312,4 +312,88 @@ pub async fn deduct_campaign_budget(
     tx.commit().await?;
 
     Ok(updated)
+}
+
+pub async fn get_leaderboard(
+    pool: &PgPool,
+    metric: &str,
+    period: &str,
+    limit: i64,
+) -> Result<Vec<LeaderboardEntry>> {
+    let period_filter = match period {
+        "week" => "AND s.submitted_at > NOW() - INTERVAL '7 days'",
+        "month" => "AND s.submitted_at > NOW() - INTERVAL '30 days'",
+        _ => "",
+    };
+
+    let sql = match metric {
+        "views" => format!(
+            r#"
+            SELECT c.pubkey, c.trust_level, COALESCE(SUM(s.total_verified_views), 0)::bigint AS value
+            FROM clippers c
+            LEFT JOIN submissions s ON s.clipper_pubkey = c.pubkey
+            WHERE c.trust_level >= 2 {}
+            GROUP BY c.pubkey, c.trust_level
+            ORDER BY value DESC
+            LIMIT $1
+            "#,
+            period_filter
+        ),
+        "best_clip" => format!(
+            r#"
+            SELECT c.pubkey, c.trust_level, COALESCE(MAX(s.total_verified_views), 0)::bigint AS value
+            FROM clippers c
+            LEFT JOIN submissions s ON s.clipper_pubkey = c.pubkey
+            WHERE c.trust_level >= 2 {}
+            GROUP BY c.pubkey, c.trust_level
+            ORDER BY value DESC
+            LIMIT $1
+            "#,
+            period_filter
+        ),
+        // default: earnings
+        _ => format!(
+            r#"
+            SELECT c.pubkey, c.trust_level, COALESCE(SUM(p.amount_sats), 0)::bigint AS value
+            FROM clippers c
+            LEFT JOIN payouts p ON p.clipper_pubkey = c.pubkey
+            WHERE c.trust_level >= 2 {}
+            GROUP BY c.pubkey, c.trust_level
+            ORDER BY value DESC
+            LIMIT $1
+            "#,
+            period_filter
+        ),
+    };
+
+    let entries = sqlx::query_as::<_, LeaderboardEntry>(&sql)
+        .bind(limit)
+        .fetch_all(pool)
+        .await?;
+
+    Ok(entries)
+}
+
+pub async fn get_social_proof_stats(pool: &PgPool) -> Result<(i64, i64)> {
+    let clippers_row: (i64,) = sqlx::query_as(
+        r#"
+        SELECT COUNT(DISTINCT clipper_pubkey)
+        FROM submissions
+        WHERE submitted_at > NOW() - INTERVAL '7 days'
+        "#,
+    )
+    .fetch_one(pool)
+    .await?;
+
+    let sats_row: (i64,) = sqlx::query_as(
+        r#"
+        SELECT COALESCE(SUM(amount_sats), 0)::bigint
+        FROM payouts
+        WHERE created_at > NOW() - INTERVAL '7 days'
+        "#,
+    )
+    .fetch_one(pool)
+    .await?;
+
+    Ok((clippers_row.0, sats_row.0))
 }
