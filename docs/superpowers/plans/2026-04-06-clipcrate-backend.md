@@ -107,6 +107,100 @@ CORS is implemented in Task 13 (Chunk 6). Rate limiting: add `tower::limit::Rate
 ### Missing `relays` Tag on Payout Event
 Add `["relays", relay_url]` tag to `build_payout_event`.
 
+### Withdrawals Table Migration
+Create `clipcrate/migrations/003_withdrawals.sql` with the withdrawals table. Do NOT put it inline in a code comment — it needs its own migration file.
+
+### Task 9: Complete the Withdraw Handler
+The `withdraw` handler must actually insert a withdrawal record:
+```rust
+sqlx::query("INSERT INTO withdrawals (clipper_pubkey, amount_sats, lightning_invoice, status) VALUES ($1, $2, $3, 'pending')")
+    .bind(&user.pubkey)
+    .bind(req.amount_sats)
+    .bind(&req.invoice)
+    .execute(&state.db)
+    .await?;
+```
+
+### Remove Dead `PlatformClient` Trait
+The trait in `platform-apis/src/lib.rs` is never implemented via `impl`. The YouTube and TikTok clients use inherent methods. Remove the trait — just keep the `ViewCount` struct and re-exports.
+
+### Fix instagram.rs and twitter.rs Stubs
+These need valid Rust module content, not just comments:
+```rust
+// clipcrate/crates/platform-apis/src/instagram.rs
+// Instagram requires Business account OAuth — Phyllo-only for MVP.
+pub struct InstagramClient;
+```
+Same pattern for `twitter.rs`.
+
+### Create vitest.config.ts
+Task 11 lists it but never creates it. Add a step:
+```typescript
+// clips-verifier/vitest.config.ts
+import { defineConfig } from 'vitest/config';
+export default defineConfig({ test: {} });
+```
+Also add tests for `extractYouTubeId` and `calculateFraudScore`.
+
+### Fix SSE Feed Time Filter
+The feed handler calls `list_active_campaigns(5, 0)` which is pagination, not time-filtered. Add a dedicated query:
+```rust
+pub async fn list_recent_campaigns(pool: &PgPool, since_minutes: i64) -> Result<Vec<Campaign>> {
+    sqlx::query_as("SELECT * FROM campaigns WHERE updated_at > NOW() - make_interval(mins => $1) ORDER BY updated_at DESC LIMIT 10")
+        .bind(since_minutes)
+        .fetch_all(pool).await.map_err(Into::into)
+}
+```
+
+### Add `sqlx` migrate feature to binary crate
+In `clipcrate/clipcrate/Cargo.toml`, add:
+```toml
+sqlx = { workspace = true, features = ["migrate"] }
+```
+
+### Expand AppState
+`AppState` must include all service clients:
+```rust
+pub struct AppState {
+    pub db: sqlx::PgPool,
+    pub clickhouse: clipcrate_db::clickhouse::ClickHouseClient,
+    pub cashu_mint: clipcrate_cashu::mint::CashuMint,
+    pub nostr_keys: nostr::Keys,
+    pub relay_url: String,
+}
+```
+Wire these in `main.rs` from environment variables.
+
+### Docker Health Checks
+Add health checks to docker-compose:
+```yaml
+postgres:
+  healthcheck:
+    test: ["CMD-SHELL", "pg_isready -U clipcrate"]
+    interval: 5s
+    timeout: 5s
+    retries: 5
+clipcrate:
+  depends_on:
+    postgres:
+      condition: service_healthy
+```
+
+### Missing Auth Endpoints
+Add `POST /api/auth/keycast` and `POST /api/auth/phyllo/connect` handlers as stubs in a new `clipcrate/crates/api/src/auth_endpoints.rs` file. These are separate from the auth middleware in `auth.rs`:
+- `/api/auth/keycast` — initiates Keycast login, returns JWT
+- `/api/auth/phyllo/connect` — initiates Phyllo OAuth redirect for social account linking
+
+### Tests for Chunks 4-6
+Every task in Chunks 4-6 must have tests. Key tests to add:
+- **Cashu wallet**: Test `get_balance` with payouts and withdrawals
+- **Wallet handler**: Test insufficient balance rejection, positive amount validation
+- **Dashboard**: Test trust level display, active submission count
+- **Platform APIs**: YouTube URL extraction tests exist; add TikTok, invalid URL edge cases
+- **CF Worker**: Test `calculateFraudScore`, `extractYouTubeId` with vitest
+- **SSE feed**: Test that recent campaigns are streamed
+- **CORS**: Test that correct origins are allowed
+
 ---
 
 ## File Structure
