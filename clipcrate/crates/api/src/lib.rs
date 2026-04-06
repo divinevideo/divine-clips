@@ -32,5 +32,12 @@ pub fn router(state: AppState) -> Router {
         .route("/api/submissions", get(submissions::list_submissions))
         .route("/api/submissions/{id}", get(submissions::get_submission))
         .route("/api/feed/live", get(feed::live_feed))
+        .route("/api/internal/submissions", get(internal::list_pending_submissions))
+        .route("/api/internal/verifications", post(internal::post_verifications))
+        .route("/api/internal/payouts", post(internal::trigger_payout))
+        .route("/api/wallet/balance", get(wallet::get_balance_handler))
+        .route("/api/wallet/withdraw", post(wallet::withdraw))
+        .route("/api/wallet/history", get(wallet::get_history))
+        .route("/api/dashboard", get(dashboard::get_dashboard))
         .with_state(state)
 }
