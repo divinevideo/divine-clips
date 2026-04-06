@@ -30,23 +30,24 @@
 		try {
 			entries = await api.leaderboard(activeTab, activePeriod, 50);
 		} catch (e) {
-			error = e instanceof Error ? e.message : 'Failed to load leaderboard';
+			// Network errors (API unreachable) show empty state; API errors show error message
+			const msg = e instanceof Error ? e.message : 'Failed to load leaderboard';
+			if (msg === 'Failed to fetch' || msg === 'Load failed') {
+				entries = [];
+			} else {
+				error = msg;
+			}
 		} finally {
 			loading = false;
 		}
 	}
 
-	onMount(async () => {
-		try {
-			socialProof = await api.socialProof();
-		} catch {
-			// social proof is non-critical
-		}
-		await loadLeaderboard();
+	onMount(() => {
+		api.socialProof().then(s => { socialProof = s; }).catch(() => {});
 	});
 
 	$effect(() => {
-		// Re-fetch when tab or period changes (after initial mount)
+		// Re-fetch when tab or period changes (runs on mount + any change)
 		activeTab;
 		activePeriod;
 		loadLeaderboard();
@@ -165,8 +166,15 @@
 			</div>
 		{:else if entries.length === 0}
 			<div class="text-center py-16 text-gray-500">
-				<p class="text-lg font-medium">No data yet</p>
-				<p class="text-sm mt-1">Be the first to earn sats as a clipper</p>
+				<p class="text-4xl mb-4">🏆</p>
+				<p class="text-lg font-medium text-gray-300">No clippers ranked yet</p>
+				<p class="text-sm mt-1">Submit clips to campaigns and start climbing the leaderboard</p>
+				<a
+					href="/campaigns"
+					class="inline-block mt-4 px-4 py-2 bg-purple-600 hover:bg-purple-500 text-white text-sm font-medium rounded-lg transition-colors"
+				>
+					Browse Campaigns
+				</a>
 			</div>
 		{:else}
 			<table class="w-full">
