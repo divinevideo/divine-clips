@@ -6,7 +6,7 @@
 	import { formatSats, formatMoney, formatCpm, formatMoneyFull, timeAgo } from '$lib/utils';
 	import type { Campaign } from '$lib/types';
 
-	const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3100';
+	const API_BASE = import.meta.env.VITE_API_URL || 'https://api.clips.divine.video';
 
 	let recentCampaigns = $state<Campaign[]>([]);
 	let loadingCampaigns = $state(true);

@@ -6,4 +6,4 @@ compatibility_date = "2025-01-01"
 crons = ["0 */6 * * *"]
 
 [vars]
-CLIPCRATE_API_URL = "https://clipcrate.divine.video"
+CLIPCRATE_API_URL = "https://api.clips.divine.video"

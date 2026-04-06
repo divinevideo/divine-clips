@@ -24,3 +24,4 @@ clipcrate-nostr = { workspace = true }
 clipcrate-cashu = { workspace = true }
 clipcrate-trust = { workspace = true }
 clipcrate-platform-apis = { workspace = true }
+sqlx = { workspace = true, features = ["migrate"] }

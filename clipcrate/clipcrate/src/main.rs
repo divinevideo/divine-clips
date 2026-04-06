@@ -20,6 +20,11 @@ async fn main() -> anyhow::Result<()> {
     let db = clipcrate_db::postgres::create_pool(&database_url).await?;
     info!("connected to database");
 
+    sqlx::migrate!("../migrations")
+        .run(&db)
+        .await?;
+    tracing::info!("migrations applied");
+
     let clickhouse = clipcrate_db::clickhouse::ClickHouseClient::new(&clickhouse_url);
 
     let cashu_wallet = clipcrate_cashu::cashu_wallet::from_env().await?;
