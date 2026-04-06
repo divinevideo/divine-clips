@@ -50,6 +50,16 @@
 	onMount(async () => {
 		initAuth();
 		if (!$isAuthenticated) {
+			// Show empty dashboard UI without data
+			data = {
+				trust_level: 1,
+				total_verified_views: 0,
+				total_earned_sats: 0,
+				balance_sats: 0,
+				active_submissions: 0,
+				weekly_views_used: 0,
+				weekly_views_limit: 10_000,
+			};
 			loading = false;
 			return;
 		}
@@ -75,20 +85,7 @@
 <div class="min-h-screen bg-gray-950 text-white">
 	<div class="max-w-5xl mx-auto px-4 py-10">
 
-		{#if !$isAuthenticated && !loading}
-			<!-- Login prompt -->
-			<div class="flex flex-col items-center justify-center py-32 gap-6">
-				<h1 class="text-3xl font-bold text-white">Clipper Dashboard</h1>
-				<p class="text-gray-400">Sign in to view your dashboard.</p>
-				<button
-					onclick={() => loginWithKeycast()}
-					class="bg-purple-600 hover:bg-purple-500 transition-colors text-white font-semibold px-8 py-3 rounded-xl"
-				>
-					Sign In
-				</button>
-			</div>
-
-		{:else if loading}
+		{#if loading}
 			<div class="flex items-center justify-center py-32">
 				<div class="w-8 h-8 border-2 border-purple-500 border-t-transparent rounded-full animate-spin"></div>
 			</div>
@@ -99,6 +96,21 @@
 			</div>
 
 		{:else if data}
+			{#if !$isAuthenticated}
+				<div class="bg-purple-600/10 border border-purple-500/30 rounded-xl p-5 mb-8 flex items-center justify-between">
+					<div>
+						<p class="text-white font-medium">Sign in to track your clips and earnings</p>
+						<p class="text-gray-400 text-sm mt-1">Connect your account to start clipping campaigns and earning sats.</p>
+					</div>
+					<button
+						onclick={() => loginWithKeycast()}
+						class="bg-purple-600 hover:bg-purple-500 transition-colors text-white font-semibold px-6 py-2.5 rounded-xl text-sm whitespace-nowrap"
+					>
+						Sign In
+					</button>
+				</div>
+			{/if}
+
 			<!-- Trust Level Badge -->
 			<div class="flex items-center gap-4 mb-8">
 				{#if data}

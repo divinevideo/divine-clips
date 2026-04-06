@@ -74,20 +74,18 @@
 					>
 						How It Works
 					</a>
-					{#if $isAuthenticated}
-						<a
-							href="/dashboard"
-							class="px-3 py-2 rounded-md text-sm font-medium transition-colors {isActive('/dashboard') ? 'bg-purple-600 text-white' : 'text-gray-300 hover:text-white hover:bg-gray-800'}"
-						>
-							Dashboard
-						</a>
-						<a
-							href="/wallet"
-							class="px-3 py-2 rounded-md text-sm font-medium transition-colors {isActive('/wallet') ? 'bg-purple-600 text-white' : 'text-gray-300 hover:text-white hover:bg-gray-800'}"
-						>
-							Wallet
-						</a>
-					{/if}
+					<a
+						href="/dashboard"
+						class="px-3 py-2 rounded-md text-sm font-medium transition-colors {isActive('/dashboard') ? 'bg-purple-600 text-white' : 'text-gray-300 hover:text-white hover:bg-gray-800'}"
+					>
+						Dashboard
+					</a>
+					<a
+						href="/wallet"
+						class="px-3 py-2 rounded-md text-sm font-medium transition-colors {isActive('/wallet') ? 'bg-purple-600 text-white' : 'text-gray-300 hover:text-white hover:bg-gray-800'}"
+					>
+						Wallet
+					</a>
 				</div>
 
 				<!-- Right side: Sign in / Sign out -->
@@ -156,22 +154,20 @@
 				>
 					How It Works
 				</a>
-				{#if $isAuthenticated}
-					<a
-						href="/dashboard"
-						onclick={() => { mobileMenuOpen = false; }}
-						class="block px-3 py-2 rounded-md text-sm font-medium transition-colors {isActive('/dashboard') ? 'bg-purple-600 text-white' : 'text-gray-300 hover:text-white hover:bg-gray-800'}"
-					>
-						Dashboard
-					</a>
-					<a
-						href="/wallet"
-						onclick={() => { mobileMenuOpen = false; }}
-						class="block px-3 py-2 rounded-md text-sm font-medium transition-colors {isActive('/wallet') ? 'bg-purple-600 text-white' : 'text-gray-300 hover:text-white hover:bg-gray-800'}"
-					>
-						Wallet
-					</a>
-				{/if}
+				<a
+					href="/dashboard"
+					onclick={() => { mobileMenuOpen = false; }}
+					class="block px-3 py-2 rounded-md text-sm font-medium transition-colors {isActive('/dashboard') ? 'bg-purple-600 text-white' : 'text-gray-300 hover:text-white hover:bg-gray-800'}"
+				>
+					Dashboard
+				</a>
+				<a
+					href="/wallet"
+					onclick={() => { mobileMenuOpen = false; }}
+					class="block px-3 py-2 rounded-md text-sm font-medium transition-colors {isActive('/wallet') ? 'bg-purple-600 text-white' : 'text-gray-300 hover:text-white hover:bg-gray-800'}"
+				>
+					Wallet
+				</a>
 				<div class="pt-2 pb-1 border-t border-gray-800">
 					{#if $isAuthenticated}
 						<button
