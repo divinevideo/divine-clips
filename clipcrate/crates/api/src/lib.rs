@@ -2,6 +2,7 @@
 // Provides Axum router definitions, request/response types, and handler functions
 // for managing video campaigns and content creator submissions.
 
+pub mod analytics;
 pub mod auth;
 pub mod auto_campaigns;
 pub mod campaigns;
@@ -11,6 +12,7 @@ pub mod feed;
 pub mod funding;
 pub mod internal;
 pub mod leaderboard;
+pub mod notifications;
 pub mod submissions;
 pub mod wallet;
 
@@ -60,6 +62,11 @@ pub fn router(state: AppState) -> Router {
         .route("/api/dashboard", get(dashboard::get_dashboard))
         .route("/api/leaderboard", get(leaderboard::get_leaderboard))
         .route("/api/stats/social-proof", get(leaderboard::get_social_proof))
+        .route("/api/analytics/submission/{id}", get(analytics::get_submission_analytics))
+        .route("/api/analytics/overview", get(analytics::get_overview))
+        .route("/api/notifications/subscribe", post(notifications::subscribe))
+        .route("/api/notifications/unsubscribe", post(notifications::unsubscribe))
+        .route("/api/notifications/vapid-key", get(notifications::vapid_key))
         .layer(cors)
         .with_state(state)
 }
