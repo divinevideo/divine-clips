@@ -12,16 +12,27 @@ async fn main() -> anyhow::Result<()> {
         .init();
 
     let database_url = std::env::var("DATABASE_URL")
-        .unwrap_or_else(|_| "postgres://postgres:postgres@localhost:5432/clipcrate".to_string());
+        .unwrap_or_else(|_| "postgres://localhost:5432/clipcrate".into());
+    let clickhouse_url = std::env::var("CLICKHOUSE_URL")
+        .unwrap_or_else(|_| "http://localhost:8123".into());
+    let port = std::env::var("PORT").unwrap_or_else(|_| "3100".into());
 
-    let pool = clipcrate_db::postgres::create_pool(&database_url).await?;
+    let db = clipcrate_db::postgres::create_pool(&database_url).await?;
     info!("connected to database");
 
-    let state = AppState { db: pool };
+    let clickhouse = clipcrate_db::clickhouse::ClickHouseClient::new(&clickhouse_url);
+    let cashu_mint = clipcrate_cashu::mint::CashuMint::new();
+
+    let state = AppState {
+        db,
+        clickhouse,
+        cashu_mint,
+    };
     let app = clipcrate_api::router(state);
 
-    let listener = tokio::net::TcpListener::bind("0.0.0.0:3100").await?;
-    info!("clipcrate listening on 0.0.0.0:3100");
+    let addr = format!("0.0.0.0:{}", port);
+    let listener = tokio::net::TcpListener::bind(&addr).await?;
+    info!("clipcrate listening on {}", addr);
 
     axum::serve(listener, app).await?;
 

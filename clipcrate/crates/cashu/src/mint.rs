@@ -6,6 +6,7 @@ use uuid::Uuid;
 /// All operations run in balance-only mode — no real Lightning or Cashu mint
 /// is contacted. Payouts and withdrawals are tracked entirely in Postgres.
 /// Swap out the inner methods for real mint calls once an actual mint is available.
+#[derive(Debug, Clone)]
 pub struct CashuMint;
 
 impl CashuMint {

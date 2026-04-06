@@ -12,17 +12,30 @@ pub mod submissions;
 pub mod wallet;
 
 use axum::{
+    http::{HeaderValue, Method},
     routing::{get, patch, post},
     Router,
 };
 use sqlx::PgPool;
+use tower_http::cors::{Any, CorsLayer};
 
 #[derive(Debug, Clone)]
 pub struct AppState {
     pub db: PgPool,
+    pub clickhouse: clipcrate_db::clickhouse::ClickHouseClient,
+    pub cashu_mint: clipcrate_cashu::mint::CashuMint,
 }
 
 pub fn router(state: AppState) -> Router {
+    let cors = CorsLayer::new()
+        .allow_origin([
+            "https://clips.divine.video".parse::<HeaderValue>().unwrap(),
+            "https://divine.video".parse::<HeaderValue>().unwrap(),
+            "http://localhost:5173".parse::<HeaderValue>().unwrap(),
+        ])
+        .allow_methods([Method::GET, Method::POST, Method::PATCH, Method::OPTIONS])
+        .allow_headers(Any);
+
     Router::new()
         .route("/campaigns", post(campaigns::create_campaign))
         .route("/campaigns", get(campaigns::list_campaigns))
@@ -39,5 +52,6 @@ pub fn router(state: AppState) -> Router {
         .route("/api/wallet/withdraw", post(wallet::withdraw))
         .route("/api/wallet/history", get(wallet::get_history))
         .route("/api/dashboard", get(dashboard::get_dashboard))
+        .layer(cors)
         .with_state(state)
 }

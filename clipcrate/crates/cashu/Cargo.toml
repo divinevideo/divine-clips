@@ -12,3 +12,6 @@ tracing = { workspace = true }
 uuid = { workspace = true }
 sqlx = { workspace = true }
 chrono = { workspace = true }
+
+[dev-dependencies]
+tokio = { workspace = true }
