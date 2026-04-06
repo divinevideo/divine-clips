@@ -2,6 +2,7 @@
   import { onMount } from 'svelte';
   import type { PageData } from './$types';
   import { budgetPercent, platformLabel, timeAgo, formatSats, formatMoney, formatCpm, formatMoneyFull } from '$lib/utils';
+  import VideoCard from '$lib/components/VideoCard.svelte';
 
   let { data }: { data: PageData } = $props();
 
@@ -9,6 +10,7 @@
     id: string;
     title: string;
     thumbnail?: string;
+    video_url: string;
     author_pubkey: string;
     author_name?: string;
     created_at: string;
@@ -46,6 +48,7 @@
             id: v.id || v.d_tag,
             title: v.title || v.content || 'Untitled',
             thumbnail: v.thumbnail,
+            video_url: v.video_url || '',
             author_pubkey: v.pubkey || '',
             author_name: v.author_name || '',
             created_at: v.created_at || v.published_at || '',
@@ -145,39 +148,13 @@
       {:else if popularVideos.length > 0}
         <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
           {#each popularVideos as video (video.id)}
-            <a
-              href="/submit?video={video.id}"
-              class="group relative bg-gray-900 rounded-xl border border-gray-800 hover:border-purple-700 transition-all overflow-hidden"
-            >
-              {#if video.thumbnail}
-                <img
-                  src={video.thumbnail}
-                  alt={video.title}
-                  class="w-full aspect-square object-cover group-hover:scale-105 transition-transform duration-300"
-                />
-              {:else}
-                <div class="w-full aspect-square bg-gray-800 flex items-center justify-center">
-                  <div class="text-center">
-                    <span class="text-4xl">&#x25B6;</span>
-                    <p class="text-gray-600 text-xs mt-1">6s loop</p>
-                  </div>
-                </div>
-              {/if}
-
-              <!-- Overlay -->
-              <div class="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/90 via-black/50 to-transparent p-3">
-                <p class="text-white text-sm font-medium truncate">{video.title}</p>
-                {#if video.author_name}
-                  <p class="text-gray-400 text-xs">by {video.author_name}</p>
-                {:else if video.author_pubkey}
-                  <p class="text-gray-400 text-xs">by {truncatePubkey(video.author_pubkey)}</p>
-                {/if}
-              </div>
-
-              <!-- Clip badge -->
-              <div class="absolute top-2 right-2 bg-purple-600 text-white text-xs font-bold px-2 py-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity">
-                Clip it
-              </div>
+            <a href="/submit?video={video.id}">
+              <VideoCard
+                src={video.video_url || `https://media.divine.video/${video.id}`}
+                thumbnail={video.thumbnail}
+                title={video.title}
+                subtitle={video.author_name || (video.author_pubkey ? truncatePubkey(video.author_pubkey) : undefined)}
+              />
             </a>
           {/each}
         </div>
