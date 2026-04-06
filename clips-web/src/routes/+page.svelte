@@ -55,26 +55,26 @@
 
 	<div class="relative max-w-3xl mx-auto text-center">
 		<h1 class="text-5xl sm:text-6xl font-extrabold text-white tracking-tight mb-4">
-			DiVine Clips
+			The DiVine Clip Market
 		</h1>
 		<p class="text-xl sm:text-2xl text-purple-200 mb-3 font-medium">
-			Earn Bitcoin by sharing 6-second loops
+			Spread the divine message across social media
 		</p>
 		<p class="text-gray-400 mb-10 max-w-xl mx-auto">
-			Discover campaigns, share clips on your platforms, and get paid in sats for every verified view.
+			Share DiVine's 6-second loops on TikTok, Reels, Shorts, and X. Help the world discover a new kind of video &mdash; and earn sats for every view.
 		</p>
 		<div class="flex flex-col sm:flex-row gap-4 justify-center">
 			<a
 				href="/campaigns"
 				class="inline-block px-8 py-3 bg-purple-600 hover:bg-purple-500 text-white font-semibold rounded-lg transition-colors text-lg shadow-lg shadow-purple-900/50"
 			>
-				Browse Campaigns
+				Explore Clips
 			</a>
 			<a
 				href="/create"
 				class="inline-block px-8 py-3 bg-gray-800 hover:bg-gray-700 text-white font-semibold rounded-lg transition-colors text-lg border border-gray-700"
 			>
-				Create Campaign
+				Promote Your Content
 			</a>
 		</div>
 	</div>
@@ -84,16 +84,16 @@
 <section class="mb-12">
 	<div class="grid grid-cols-1 sm:grid-cols-3 gap-6 max-w-3xl mx-auto text-center">
 		<div class="bg-gray-900 rounded-xl p-6 border border-gray-800">
-			<div class="text-3xl font-bold text-purple-400 mb-1">6s</div>
-			<div class="text-gray-400 text-sm">Short loop format</div>
+			<div class="text-3xl font-bold text-purple-400 mb-1">6 seconds</div>
+			<div class="text-gray-400 text-sm">The format that makes people stop scrolling</div>
 		</div>
 		<div class="bg-gray-900 rounded-xl p-6 border border-gray-800">
-			<div class="text-3xl font-bold text-purple-400 mb-1">Sats</div>
-			<div class="text-gray-400 text-sm">Paid in Bitcoin</div>
+			<div class="text-3xl font-bold text-purple-400 mb-1">Bitcoin</div>
+			<div class="text-gray-400 text-sm">Earn sats for every verified view</div>
 		</div>
 		<div class="bg-gray-900 rounded-xl p-6 border border-gray-800">
-			<div class="text-3xl font-bold text-purple-400 mb-1">4</div>
-			<div class="text-gray-400 text-sm">Platforms supported</div>
+			<div class="text-3xl font-bold text-purple-400 mb-1">Everywhere</div>
+			<div class="text-gray-400 text-sm">TikTok, Reels, Shorts, and X</div>
 		</div>
 	</div>
 </section>
@@ -175,10 +175,10 @@
 <!-- Social Proof Footer Banner -->
 <section class="mt-16 text-center py-10 border-t border-gray-800">
 	<p class="text-gray-400 text-lg">
-		Join thousands of clippers earning sats — one 6-second loop at a time.
+		The best content spreads through people, not algorithms. Help DiVine grow &mdash; one clip at a time.
 	</p>
 	<a href="/campaigns" class="mt-4 inline-block text-purple-400 hover:text-purple-300 text-sm font-medium transition-colors">
-		View all campaigns &rarr;
+		Start clipping &rarr;
 	</a>
 </section>
 
