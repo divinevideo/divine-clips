@@ -14,6 +14,101 @@
 
 ---
 
+## Corrections & Amendments (Post-Review)
+
+The following corrections apply across the plan. The executing agent MUST apply these when implementing each task:
+
+### TDD Ordering
+All tasks must follow TDD: write failing test FIRST, then implement. The plan shows tests after implementation in some tasks — reverse the order. For every handler, model, and logic function, write the test before the implementation code.
+
+### Missing Tests — Add These
+- **Campaign handlers**: Test create (valid + invalid), list, get, update. Test auth requirement.
+- **Submission handlers**: Test create (valid, duplicate URL 409, inactive campaign, trust limit exceeded). Test list/get.
+- **Fraud detection (`fraud.rs`)**: Test `check_velocity` and `check_suspicious_pattern` with edge cases.
+- **Nostr event builders**: Test correct kind numbers, tag shapes, label namespaces match spec JSON.
+- **Internal API**: Test `post_verifications` payout calculation, partial budget exhaustion.
+- **Integration tests**: Create `tests/integration/campaign_test.rs` and `submission_test.rs` as listed in file structure.
+
+### Nostr Crate API Fix
+The nostr crate v0.37 uses `EventBuilder`, not `UnsignedEvent::new()`. Replace all event builders:
+```rust
+// WRONG:
+UnsignedEvent::new(Kind::from(30402), content, tags)
+
+// CORRECT:
+EventBuilder::new(Kind::from(30402), content).tags(tags)
+```
+Then sign with: `let event = builder.sign_with_keys(&keys)?;`
+The `Publisher` must hold `Keys` and sign before publishing.
+
+### Relay Hints on `a` Tags
+All `a` tags must include the relay hint as a third element:
+```rust
+Tag::custom(TagKind::custom("a"), vec![content_ref.clone(), relay_url.clone()])
+```
+Add `relay_url: &str` parameter to all event builder functions.
+
+### ClickHouse Type Fixes
+1. Add `time = "0.3"` to workspace dependencies and `clipcrate-db` Cargo.toml
+2. Change `source` field in `VerificationSnapshot` from `String` to match ClickHouse Enum. Simplest fix: change ClickHouse schema to use `String` instead of `Enum` — avoids serialization issues.
+
+### Transactional Payout Logic
+The `post_verifications` handler MUST use a Postgres transaction:
+```rust
+let mut tx = state.db.begin().await?;
+// deduct budget, create payout, update submission all within tx
+tx.commit().await?;
+```
+Use `SELECT ... FOR UPDATE` on the campaign row to prevent concurrent budget overdraw.
+
+### Campaign Activation Flow
+Campaign starts as `pending`. Transitions to `active` after Cashu deposit is confirmed. For MVP (balance-only mode), create campaigns directly as `active` by changing the INSERT default:
+```sql
+INSERT INTO campaigns (..., status) VALUES (..., 'active')
+```
+
+### Store content_refs and guidelines
+Add columns to campaigns table:
+```sql
+content_refs TEXT[] NOT NULL DEFAULT '{}',
+guidelines TEXT
+```
+Pass these to the Nostr event builder. Add corresponding fields to the `Campaign` model.
+
+### URL Validation on Submissions
+Validate that `external_url` is a well-formed URL and the domain matches the declared platform:
+```rust
+let url = url::Url::parse(&req.external_url)
+    .map_err(|_| ApiError::BadRequest("invalid URL".into()))?;
+let valid_domain = match req.platform.as_str() {
+    "tiktok" => url.host_str().map_or(false, |h| h.contains("tiktok.com")),
+    "youtube" => url.host_str().map_or(false, |h| h.contains("youtube.com") || h.contains("youtu.be")),
+    "instagram" => url.host_str().map_or(false, |h| h.contains("instagram.com")),
+    "x" => url.host_str().map_or(false, |h| h.contains("x.com") || h.contains("twitter.com")),
+    _ => false,
+};
+if !valid_domain {
+    return Err(ApiError::BadRequest("URL doesn't match declared platform".into()));
+}
+```
+Add `url = "2"` to the API crate dependencies.
+
+### Module Stub Ordering
+In Task 3, create all stub module files (Step 8) BEFORE writing lib.rs (Step 5). Or write lib.rs with `#[cfg(feature = "...")]` — simplest: just create the stubs first.
+
+### Missing Endpoints
+- Add `POST /api/internal/payouts` endpoint (from spec) that triggers payout for a specific submission
+- Add verification history to `GET /api/submissions/:id` response (query ClickHouse for snapshots)
+- Add `GET /api/wallet/history` endpoint (query payouts + withdrawals tables)
+
+### CORS and Rate Limiting
+CORS is implemented in Task 13 (Chunk 6). Rate limiting: add `tower::limit::RateLimitLayer` or use `governor` crate. Add to workspace deps: `governor = "0.7"`. Apply per-route rate limits in the router.
+
+### Missing `relays` Tag on Payout Event
+Add `["relays", relay_url]` tag to `build_payout_event`.
+
+---
+
 ## File Structure
 
 ```
