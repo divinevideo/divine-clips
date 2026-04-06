@@ -31,5 +31,6 @@ pub fn router(state: AppState) -> Router {
         .route("/api/submissions", post(submissions::create_submission))
         .route("/api/submissions", get(submissions::list_submissions))
         .route("/api/submissions/{id}", get(submissions::get_submission))
+        .route("/api/feed/live", get(feed::live_feed))
         .with_state(state)
 }

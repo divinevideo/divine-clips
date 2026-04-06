@@ -4,7 +4,7 @@ use sqlx::postgres::PgPoolOptions;
 use sqlx::PgPool;
 use uuid::Uuid;
 
-use crate::models::{Campaign, Clipper, Submission};
+use crate::models::{Campaign, Clipper, Payout, Submission};
 
 pub async fn create_pool(database_url: &str) -> Result<PgPool> {
     let pool = PgPoolOptions::new()
@@ -58,6 +58,16 @@ pub async fn get_campaign(pool: &PgPool, id: Uuid) -> Result<Option<Campaign>> {
     .await?;
 
     Ok(campaign)
+}
+
+pub async fn list_recent_campaigns(pool: &sqlx::PgPool, since_minutes: i64) -> Result<Vec<Campaign>> {
+    let campaigns = sqlx::query_as::<_, Campaign>(
+        "SELECT * FROM campaigns WHERE updated_at > NOW() - make_interval(mins => $1) ORDER BY updated_at DESC LIMIT 10"
+    )
+    .bind(since_minutes)
+    .fetch_all(pool)
+    .await?;
+    Ok(campaigns)
 }
 
 pub async fn list_active_campaigns(
@@ -192,4 +202,114 @@ pub async fn count_active_submissions(pool: &PgPool, clipper_pubkey: &str) -> Re
     .await?;
 
     Ok(row.0)
+}
+
+pub async fn list_pending_submissions(pool: &PgPool) -> Result<Vec<Submission>> {
+    let submissions = sqlx::query_as::<_, Submission>(
+        r#"
+        SELECT * FROM submissions
+        WHERE status IN ('pending', 'active')
+          AND submitted_at > NOW() - INTERVAL '30 days'
+        ORDER BY submitted_at ASC
+        "#,
+    )
+    .fetch_all(pool)
+    .await?;
+
+    Ok(submissions)
+}
+
+pub async fn update_submission_views(
+    pool: &PgPool,
+    id: Uuid,
+    views: i64,
+) -> Result<Option<Submission>> {
+    let submission = sqlx::query_as::<_, Submission>(
+        r#"
+        UPDATE submissions
+        SET total_verified_views = $2,
+            last_verified_at = NOW(),
+            status = 'active'
+        WHERE id = $1
+        RETURNING *
+        "#,
+    )
+    .bind(id)
+    .bind(views)
+    .fetch_optional(pool)
+    .await?;
+
+    Ok(submission)
+}
+
+pub async fn create_payout(
+    pool: &PgPool,
+    submission_id: Uuid,
+    campaign_id: Uuid,
+    clipper_pubkey: &str,
+    amount_sats: i64,
+    views_at_payout: i64,
+) -> Result<Payout> {
+    let payout = sqlx::query_as::<_, Payout>(
+        r#"
+        INSERT INTO payouts (submission_id, campaign_id, clipper_pubkey, amount_sats, views_at_payout)
+        VALUES ($1, $2, $3, $4, $5)
+        RETURNING *
+        "#,
+    )
+    .bind(submission_id)
+    .bind(campaign_id)
+    .bind(clipper_pubkey)
+    .bind(amount_sats)
+    .bind(views_at_payout)
+    .fetch_one(pool)
+    .await?;
+
+    Ok(payout)
+}
+
+pub async fn deduct_campaign_budget(
+    pool: &PgPool,
+    campaign_id: Uuid,
+    amount_sats: i64,
+) -> Result<Option<Campaign>> {
+    let mut tx = pool.begin().await?;
+
+    let campaign = sqlx::query_as::<_, Campaign>(
+        "SELECT * FROM campaigns WHERE id = $1 FOR UPDATE",
+    )
+    .bind(campaign_id)
+    .fetch_optional(&mut *tx)
+    .await?;
+
+    let campaign = match campaign {
+        Some(c) => c,
+        None => {
+            tx.rollback().await?;
+            return Ok(None);
+        }
+    };
+
+    let new_budget = (campaign.budget_remaining_sats - amount_sats).max(0);
+    let new_status = if new_budget == 0 { "exhausted" } else { campaign.status.as_str() };
+
+    let updated = sqlx::query_as::<_, Campaign>(
+        r#"
+        UPDATE campaigns
+        SET budget_remaining_sats = $2,
+            status = $3,
+            updated_at = NOW()
+        WHERE id = $1
+        RETURNING *
+        "#,
+    )
+    .bind(campaign_id)
+    .bind(new_budget)
+    .bind(new_status)
+    .fetch_optional(&mut *tx)
+    .await?;
+
+    tx.commit().await?;
+
+    Ok(updated)
 }
