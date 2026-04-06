@@ -35,6 +35,7 @@ pub fn router(state: AppState) -> Router {
     let cors = CorsLayer::new()
         .allow_origin([
             "https://clips.divine.video".parse::<HeaderValue>().unwrap(),
+            "https://api.clips.divine.video".parse::<HeaderValue>().unwrap(),
             "https://divine.video".parse::<HeaderValue>().unwrap(),
             "http://localhost:5173".parse::<HeaderValue>().unwrap(),
         ])

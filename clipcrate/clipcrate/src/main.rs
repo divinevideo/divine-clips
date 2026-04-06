@@ -15,7 +15,7 @@ async fn main() -> anyhow::Result<()> {
         .unwrap_or_else(|_| "postgres://localhost:5432/clipcrate".into());
     let clickhouse_url = std::env::var("CLICKHOUSE_URL")
         .unwrap_or_else(|_| "http://localhost:8123".into());
-    let port = std::env::var("PORT").unwrap_or_else(|_| "3100".into());
+    let port = std::env::var("PORT").unwrap_or_else(|_| "8080".into());
 
     let db = clipcrate_db::postgres::create_pool(&database_url).await?;
     info!("connected to database");
