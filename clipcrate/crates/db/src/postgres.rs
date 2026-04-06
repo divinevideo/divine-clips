@@ -4,7 +4,7 @@ use sqlx::postgres::PgPoolOptions;
 use sqlx::PgPool;
 use uuid::Uuid;
 
-use crate::models::{Campaign, Clipper, LeaderboardEntry, Payout, Submission};
+use crate::models::{Campaign, Clipper, LeaderboardEntry, Payout, PushSubscription, Submission};
 
 pub async fn create_pool(database_url: &str) -> Result<PgPool> {
     let pool = PgPoolOptions::new()
@@ -396,4 +396,54 @@ pub async fn get_social_proof_stats(pool: &PgPool) -> Result<(i64, i64)> {
     .await?;
 
     Ok((clippers_row.0, sats_row.0))
+}
+
+pub async fn save_push_subscription(
+    pool: &PgPool,
+    clipper_pubkey: &str,
+    endpoint: &str,
+    p256dh: &str,
+    auth: &str,
+) -> Result<()> {
+    sqlx::query(
+        r#"
+        INSERT INTO push_subscriptions (clipper_pubkey, endpoint, p256dh, auth)
+        VALUES ($1, $2, $3, $4)
+        ON CONFLICT (endpoint) DO UPDATE SET
+            clipper_pubkey = EXCLUDED.clipper_pubkey,
+            p256dh = EXCLUDED.p256dh,
+            auth = EXCLUDED.auth
+        "#,
+    )
+    .bind(clipper_pubkey)
+    .bind(endpoint)
+    .bind(p256dh)
+    .bind(auth)
+    .execute(pool)
+    .await?;
+
+    Ok(())
+}
+
+pub async fn delete_push_subscription(pool: &PgPool, endpoint: &str) -> Result<()> {
+    sqlx::query("DELETE FROM push_subscriptions WHERE endpoint = $1")
+        .bind(endpoint)
+        .execute(pool)
+        .await?;
+
+    Ok(())
+}
+
+pub async fn get_push_subscriptions(
+    pool: &PgPool,
+    clipper_pubkey: &str,
+) -> Result<Vec<PushSubscription>> {
+    let subs = sqlx::query_as::<_, PushSubscription>(
+        "SELECT * FROM push_subscriptions WHERE clipper_pubkey = $1",
+    )
+    .bind(clipper_pubkey)
+    .fetch_all(pool)
+    .await?;
+
+    Ok(subs)
 }
