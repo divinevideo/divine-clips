@@ -1,3 +1,6 @@
 // clipcrate-cashu: Cashu mint integration for payments
-// Provides a client for interacting with Cashu mint APIs to issue and redeem
-// ecash tokens used for creator payouts and campaign funding.
+// MVP balance-only mode: tracks balances in Postgres without a real Cashu mint.
+// Real mint integration can be layered in without changing the public API.
+
+pub mod mint;
+pub mod wallet;
