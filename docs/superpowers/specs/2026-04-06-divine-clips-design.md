@@ -69,7 +69,7 @@ Also serves a creator-facing campaign creation flow.
 
 ### Shared Infrastructure
 
-- **divine-platform-apis** (Rust crate) — Shared library for TikTok, YouTube, Instagram, X API clients. Used by clipcrate and verifier.divine.video. The CF Worker reimplements the same API calls in TypeScript.
+- **divine-platform-apis** (Rust crate) — Shared library for TikTok, YouTube, Instagram, X API clients. Used by clipcrate and the existing verifier.divine.video service (a separate DiVine project for C2PA content provenance verification that also needs these same platform APIs). The clips-verifier CF Worker reimplements the same API calls in TypeScript.
 - **Funnelcake relay** — Clipcrate publishes Nostr events here for interoperability and real-time subscriptions
 - **ClickHouse** — Verification snapshots, view count time-series, analytics
 - **Cashu mint (Moksha)** — Embedded in clipcrate or run as a sidecar. Handles campaign escrow and clipper payouts.
@@ -93,11 +93,11 @@ Also serves a creator-facing campaign creation flow.
                           │Postgres│ │ ClickHouse  │
                           │(state) │ │(analytics)  │
                           └────────┘ └─────────────┘
-                                          ▲
-┌──────────────────────┐                  │
-│  clips-verifier        │──────────────────┘
-│  (CF Worker, cron)     │───▶ YouTube, TikTok, IG, X APIs
-│                        │───▶ Phyllo (fallback)
+
+┌──────────────────────┐
+│  clips-verifier        │───▶ YouTube, TikTok, IG, X APIs
+│  (CF Worker, cron)     │───▶ Phyllo (fallback)
+│                        │───▶ clipcrate /api/internal/*
 └──────────────────────┘
 ```
 
@@ -137,13 +137,15 @@ A clip campaign is a marketplace listing offering sats for clipping services.
 
 - `a` tags reference DiVine video events (kind 34236) being promoted
 - Multiple `a` tags for campaigns promoting several videos
-- `price` tag uses NIP-15 pricing convention extended with `per_1000_views` frequency
+- `price` tag uses NIP-15 pricing convention extended with `per_1000_views` frequency (DiVine-specific extension — not standard NIP-15)
 - `t` tags specify target platforms
 - NIP-32 labels (`divine-clips` namespace) enable filtering
 - NIP-40 `expiration` tag for campaign duration
 - Parameterized replaceable: creator can update status, budget, settings
 
-### Submission Event (Kind 30403 — Parameterized Replaceable)
+### Submission Event (Kind 30403 — Custom Parameterized Replaceable)
+
+Kind 30403 is a DiVine-specific application kind in the parameterized replaceable range (30000-39999). It is not part of NIP-15 or any existing NIP — it follows the convention of the next available kind after 30402.
 
 ```json
 {
@@ -165,7 +167,7 @@ A clip campaign is a marketplace listing offering sats for clipping services.
 - References campaign via `a` tag
 - `r` tag holds the external clip URL
 - Parameterized replaceable so clipper/system can update status
-- One submission per external clip URL per campaign
+- One submission per external clip URL per campaign (enforced in Postgres, not at the Nostr level)
 
 ### Payout Events (NIP-57 Zaps)
 
@@ -233,6 +235,8 @@ clips-verifier (CF Worker, cron every 6h):
 
 Views after 30 days are not credited. This keeps campaign budgets predictable.
 
+Note: Since the cron runs every 6 hours, actual check times have up to ~6h drift (e.g., the "T+24h" check may happen anywhere from 24h to 29h59m after submission). This is acceptable — view counts are cumulative, so drift doesn't cause missed views.
+
 ### Platform API Strategy
 
 | Platform | Public access | Auth required | Fallback |
@@ -286,6 +290,19 @@ For MVP, one submission = one campaign. The clipper selects the primary campaign
 
 Flagged submissions enter a manual review queue. For MVP, the DiVine team reviews these manually.
 
+### Concurrency
+
+- Duplicate submission (same URL + campaign) is prevented by the Postgres unique constraint — first writer wins, second gets a 409 Conflict response
+- Two clippers submitting the same URL for the same campaign: first submission is accepted, second is rejected with a clear error message
+
+### Clipper Account Handling
+
+If a clipper's Keycast session is revoked or they delete their account:
+- Pending payouts are held for 90 days, redeemable if the clipper re-authenticates
+- After 90 days, unredeemed Cashu tokens are returned to the respective campaign budgets
+- In-flight submissions are marked as "abandoned" and stop accruing verified views
+- ClickHouse analytics data is retained (anonymized after 90 days)
+
 ---
 
 ## Payment System (Cashu)
@@ -306,7 +323,7 @@ Moksha (Rust Cashu mint) embedded in or co-deployed with clipcrate. Backed by a 
 1. Verification triggers payout calculation (views × CPM rate)
 2. Clipcrate instructs mint to issue new tokens to clipper's pubkey
 3. Clipper's Cashu balance increases in clips.divine.video
-4. Zap receipt (kind 9735) published to funnelcake for transparency
+4. Payout receipt event published to funnelcake for transparency. Note: since payouts use Cashu (not direct Lightning), standard NIP-57 zap receipts (kind 9735) don't apply directly. Instead, clipcrate publishes a kind 9734-style event referencing the submission and campaign as a transparency record. True NIP-57 zap receipts are generated only when clippers redeem Cashu tokens to Lightning.
 
 ### Redemption Flow
 
@@ -320,7 +337,20 @@ Moksha (Rust Cashu mint) embedded in or co-deployed with clipcrate. Backed by a 
 When a campaign's token pool reaches zero:
 - Campaign status flips to "exhausted" (kind 30402 updated)
 - No new submissions accepted
-- In-progress submissions continue through verification (unfunded views aren't credited)
+- In-progress submissions continue through verification with partial payout logic:
+  - If budget covers some but not all views: clipper receives a partial payout for the views the remaining budget can cover
+  - The submission status changes to "verified" with a note that the campaign exhausted mid-verification
+  - Remaining uncredited views are recorded in ClickHouse for analytics but do not generate payouts
+  - If the creator tops up the campaign budget later, previously uncredited views are NOT retroactively paid — only new views from that point forward count
+
+### Redemption Failure Handling
+
+When a clipper's Lightning withdrawal fails:
+- Cashu tokens remain in the clipper's balance (not destroyed)
+- The withdrawal attempt is logged with error details
+- Clipper can retry immediately with a different invoice
+- No token locking during withdrawal attempts — Cashu tokens are bearer instruments, the mint either melts them or doesn't
+- If the mint itself is unreachable, the clipper's token balance is preserved in Postgres and they can retry later
 
 ---
 
@@ -350,13 +380,14 @@ submissions (
   nostr_event_id TEXT,
   campaign_id UUID REFERENCES campaigns,
   clipper_pubkey TEXT,
-  external_url TEXT UNIQUE,
+  external_url TEXT,
   platform TEXT,              -- tiktok, instagram, youtube, x
   status TEXT,                -- pending, active, verified, rejected
   total_verified_views BIGINT DEFAULT 0,
   total_paid_sats BIGINT DEFAULT 0,
   submitted_at TIMESTAMPTZ,
-  last_verified_at TIMESTAMPTZ
+  last_verified_at TIMESTAMPTZ,
+  UNIQUE (external_url, campaign_id)  -- same URL can be submitted to different campaigns
 )
 
 -- Clippers
@@ -366,10 +397,17 @@ clippers (
   total_verified_views BIGINT DEFAULT 0,
   total_earned_sats BIGINT DEFAULT 0,
   weekly_views_used BIGINT DEFAULT 0,
-  weekly_views_reset_at TIMESTAMPTZ,
+  weekly_views_reset_at TIMESTAMPTZ,  -- reset weekly via cron; rolling 7-day window
   phyllo_account_id TEXT,     -- if connected via Phyllo
   created_at TIMESTAMPTZ
 )
+
+-- Key indexes
+CREATE INDEX idx_campaigns_status ON campaigns(status);
+CREATE INDEX idx_submissions_campaign ON submissions(campaign_id);
+CREATE INDEX idx_submissions_status ON submissions(status);
+CREATE INDEX idx_submissions_clipper ON submissions(clipper_pubkey);
+CREATE INDEX idx_payouts_clipper ON payouts(clipper_pubkey);
 
 -- Payout ledger
 payouts (
@@ -391,25 +429,34 @@ payouts (
 -- Verification snapshots (append-only)
 CREATE TABLE verification_snapshots (
   submission_id UUID,
+  campaign_id UUID,
+  clipper_pubkey String,
   timestamp DateTime,
   view_count UInt64,
-  source Enum('youtube_api', 'tiktok_api', 'phyllo', 'manual'),
+  source Enum('youtube_api', 'tiktok_api', 'instagram_api', 'phyllo', 'manual'),
   fraud_score Float32 DEFAULT 0.0
 ) ENGINE = MergeTree()
 ORDER BY (submission_id, timestamp);
 
 -- Campaign analytics (materialized view)
+-- Uses AggregatingMergeTree with proper aggregate functions
 CREATE MATERIALIZED VIEW campaign_analytics
-ENGINE = SummingMergeTree()
+ENGINE = AggregatingMergeTree()
 ORDER BY (campaign_id, date)
 AS SELECT
   campaign_id,
   toDate(timestamp) AS date,
-  max(view_count) AS total_views,
-  count(DISTINCT submission_id) AS active_submissions
+  maxState(view_count) AS total_views,
+  uniqState(submission_id) AS active_submissions
 FROM verification_snapshots
 GROUP BY campaign_id, date;
+
+-- Query campaign_analytics with merge functions:
+-- SELECT campaign_id, date, maxMerge(total_views), uniqMerge(active_submissions)
+-- FROM campaign_analytics GROUP BY campaign_id, date;
 ```
+
+Note: `campaign_id` and `clipper_pubkey` are denormalized into ClickHouse snapshots to avoid cross-database joins with Postgres. Clipcrate includes these fields when writing verification results.
 
 ---
 
@@ -478,6 +525,12 @@ GET    /api/internal/submissions   Get submissions pending verification
 POST   /api/internal/verifications Post verification results
 POST   /api/internal/payouts       Trigger payout for a submission
 ```
+
+### API Policies
+
+- **CORS**: clipcrate allows requests from `clips.divine.video` and `divine.video` origins
+- **Rate limiting**: Public endpoints (campaign list/detail) rate-limited to 60 req/min per IP. Authenticated endpoints rate-limited to 120 req/min per clipper pubkey. Internal endpoints use service-to-service auth tokens (no rate limit).
+- **Authentication**: Keycast JWT tokens for clipper/creator auth. HMAC-signed tokens for internal service-to-service auth between clips-verifier and clipcrate.
 
 ---
 
