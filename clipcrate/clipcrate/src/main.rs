@@ -21,12 +21,14 @@ async fn main() -> anyhow::Result<()> {
     info!("connected to database");
 
     let clickhouse = clipcrate_db::clickhouse::ClickHouseClient::new(&clickhouse_url);
-    let cashu_mint = clipcrate_cashu::mint::CashuMint::new();
+
+    let cashu_wallet = clipcrate_cashu::cashu_wallet::from_env().await?;
+    info!("cashu wallet initialized");
 
     let state = AppState {
         db,
         clickhouse,
-        cashu_mint,
+        cashu_wallet,
     };
     let app = clipcrate_api::router(state);
 

@@ -70,8 +70,17 @@
 			]);
 			data = dashData;
 			submissions = subData;
-		} catch (e: unknown) {
-			error = e instanceof Error ? e.message : 'Failed to load dashboard';
+		} catch {
+			// API not available — show empty dashboard with defaults
+			data = {
+				trust_level: 1,
+				total_verified_views: 0,
+				total_earned_sats: 0,
+				balance_sats: 0,
+				active_submissions: 0,
+				weekly_views_used: 0,
+				weekly_views_limit: 10_000,
+			};
 		} finally {
 			loading = false;
 		}

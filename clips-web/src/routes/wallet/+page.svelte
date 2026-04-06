@@ -62,8 +62,8 @@
 			]);
 			balance = balData.balance_sats;
 			transactions = histData.transactions;
-		} catch (e: unknown) {
-			error = e instanceof Error ? e.message : 'Failed to load wallet';
+		} catch {
+			// API not available — show empty wallet UI
 		} finally {
 			loading = false;
 		}

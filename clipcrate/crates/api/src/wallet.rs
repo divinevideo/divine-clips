@@ -28,6 +28,7 @@ pub struct WithdrawRequest {
 pub struct WithdrawResponse {
     pub status: String,
     pub amount_sats: i64,
+    pub preimage: Option<String>,
 }
 
 #[derive(Debug, Serialize)]
@@ -50,6 +51,7 @@ pub async fn get_balance_handler(
 }
 
 /// POST /api/wallet/withdraw
+/// Actually pays the Lightning invoice via Cashu melt.
 pub async fn withdraw(
     State(state): State<AppState>,
     user: AuthenticatedUser,
@@ -76,26 +78,56 @@ pub async fn withdraw(
         )));
     }
 
-    sqlx::query(
+    // Insert withdrawal record as pending
+    let withdrawal_id = sqlx::query_scalar::<_, uuid::Uuid>(
         r#"
         INSERT INTO withdrawals (clipper_pubkey, amount_sats, lightning_invoice, status)
         VALUES ($1, $2, $3, 'pending')
+        RETURNING id
         "#,
     )
     .bind(&user.pubkey)
     .bind(req.amount_sats)
     .bind(&req.invoice)
-    .execute(&state.db)
+    .fetch_one(&state.db)
     .await
     .map_err(|e| ApiError::Internal(e.into()))?;
 
-    Ok((
-        StatusCode::CREATED,
-        Json(WithdrawResponse {
-            status: "pending".to_string(),
-            amount_sats: req.amount_sats,
-        }),
-    ))
+    // Actually pay the Lightning invoice via Cashu
+    match state.cashu_wallet.withdraw_to_invoice(&req.invoice).await {
+        Ok(preimage) => {
+            // Mark as completed with preimage
+            sqlx::query(
+                "UPDATE withdrawals SET status = 'completed', payment_preimage = $1 WHERE id = $2",
+            )
+            .bind(&preimage)
+            .bind(withdrawal_id)
+            .execute(&state.db)
+            .await
+            .map_err(|e| ApiError::Internal(e.into()))?;
+
+            Ok((
+                StatusCode::OK,
+                Json(WithdrawResponse {
+                    status: "completed".to_string(),
+                    amount_sats: req.amount_sats,
+                    preimage: Some(preimage),
+                }),
+            ))
+        }
+        Err(e) => {
+            // Mark as failed
+            sqlx::query(
+                "UPDATE withdrawals SET status = 'failed' WHERE id = $1",
+            )
+            .bind(withdrawal_id)
+            .execute(&state.db)
+            .await
+            .map_err(|e2| ApiError::Internal(e2.into()))?;
+
+            Err(ApiError::Internal(e))
+        }
+    }
 }
 
 /// GET /api/wallet/history

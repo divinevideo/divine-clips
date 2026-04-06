@@ -7,6 +7,7 @@ pub mod campaigns;
 pub mod dashboard;
 pub mod error;
 pub mod feed;
+pub mod funding;
 pub mod internal;
 pub mod submissions;
 pub mod wallet;
@@ -19,11 +20,11 @@ use axum::{
 use sqlx::PgPool;
 use tower_http::cors::{Any, CorsLayer};
 
-#[derive(Debug, Clone)]
+#[derive(Clone)]
 pub struct AppState {
     pub db: PgPool,
     pub clickhouse: clipcrate_db::clickhouse::ClickHouseClient,
-    pub cashu_mint: clipcrate_cashu::mint::CashuMint,
+    pub cashu_wallet: clipcrate_cashu::cashu_wallet::CashuWallet,
 }
 
 pub fn router(state: AppState) -> Router {
@@ -42,6 +43,8 @@ pub fn router(state: AppState) -> Router {
         .route("/api/campaigns", get(campaigns::list_campaigns))
         .route("/api/campaigns/{id}", get(campaigns::get_campaign))
         .route("/api/campaigns/{id}", patch(campaigns::update_campaign))
+        .route("/api/campaigns/{id}/fund", post(funding::create_funding_invoice))
+        .route("/api/campaigns/{id}/fund/{quote_id}", get(funding::check_funding_status))
         .route("/api/submissions", post(submissions::create_submission))
         .route("/api/submissions", get(submissions::list_submissions))
         .route("/api/submissions/{id}", get(submissions::get_submission))

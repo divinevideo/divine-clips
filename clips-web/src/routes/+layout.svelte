@@ -12,10 +12,15 @@
 	let mobileMenuOpen = $state(false);
 
 	onMount(async () => {
-		// Try restoring session from @divinevideo/login tokens first
-		const restored = await restoreSession();
-		if (!restored) {
-			// Fall back to localStorage token check
+		try {
+			// Try restoring session from @divinevideo/login tokens first
+			const restored = await restoreSession();
+			if (!restored) {
+				// Fall back to localStorage token check
+				initAuth();
+			}
+		} catch {
+			// Auth restore failed — fall back to localStorage
 			initAuth();
 		}
 	});
