@@ -3,6 +3,8 @@ import { calculateFraudScore } from './fraud';
 import { getPhylloViews } from './phyllo';
 import { getYouTubeViews } from './platforms/youtube';
 import { getTikTokViews, isTikTokUrl } from './platforms/tiktok';
+import { getInstagramViews, isInstagramUrl } from './platforms/instagram';
+import { getXViews, isXUrl } from './platforms/x';
 import type { Submission, VerificationResult, ViewCountResult } from './platforms/types';
 
 export interface Env {
@@ -26,6 +28,10 @@ async function pollViewCount(
     result = await getYouTubeViews(external_url, env.YOUTUBE_API_KEY);
   } else if (platform === 'tiktok' || isTikTokUrl(external_url)) {
     result = await getTikTokViews(external_url);
+  } else if (platform === 'instagram' || isInstagramUrl(external_url)) {
+    result = await getInstagramViews(external_url);
+  } else if (platform === 'x' || platform === 'twitter' || isXUrl(external_url)) {
+    result = await getXViews(external_url);
   }
 
   if (!result) {
