@@ -58,3 +58,35 @@ export interface CreateSubmissionRequest {
   external_url: string;
   platform: string;
 }
+
+export interface DailyViews {
+  date: string;
+  views: number;
+}
+
+export interface PlatformStats {
+  platform: string;
+  views: number;
+  earned_sats: number;
+}
+
+export interface AnalyticsOverview {
+  daily_views: DailyViews[];
+  by_platform: PlatformStats[];
+}
+
+export interface ViewSnapshot {
+  timestamp: number;
+  view_count: number;
+}
+
+export interface PayoutPoint {
+  timestamp: string;
+  amount_sats: number;
+  cumulative_sats: number;
+}
+
+export interface SubmissionAnalytics {
+  snapshots: ViewSnapshot[];
+  payouts: PayoutPoint[];
+}

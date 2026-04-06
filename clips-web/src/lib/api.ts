@@ -1,4 +1,4 @@
-import type { Campaign, Submission, DashboardData, TransactionRecord, CreateCampaignRequest, CreateSubmissionRequest } from './types';
+import type { Campaign, Submission, DashboardData, TransactionRecord, CreateCampaignRequest, CreateSubmissionRequest, AnalyticsOverview, SubmissionAnalytics } from './types';
 
 const API_BASE = import.meta.env.VITE_API_URL || 'https://api.clips.divine.video';
 
@@ -44,5 +44,9 @@ export const api = {
     balance: () => apiFetch<{ balance_sats: number }>('/api/wallet/balance'),
     withdraw: (invoice: string, amount_sats: number) => apiFetch<{ status: string; amount_sats: number }>('/api/wallet/withdraw', { method: 'POST', body: JSON.stringify({ invoice, amount_sats }) }),
     history: () => apiFetch<{ transactions: TransactionRecord[] }>('/api/wallet/history'),
+  },
+  analytics: {
+    overview: () => apiFetch<AnalyticsOverview>('/api/analytics/overview'),
+    submission: (id: string) => apiFetch<SubmissionAnalytics>(`/api/analytics/submission/${id}`),
   },
 };

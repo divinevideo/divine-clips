@@ -134,8 +134,14 @@
 						</div>
 					</div>
 				{/if}
-				<div class="ml-auto">
-					<h1 class="text-2xl font-bold text-white text-right">Dashboard</h1>
+				<div class="ml-auto flex flex-col items-end gap-2">
+					<h1 class="text-2xl font-bold text-white">Dashboard</h1>
+					<a
+						href="/dashboard/analytics"
+						class="text-purple-400 hover:text-purple-300 text-sm font-medium transition-colors"
+					>
+						View Analytics →
+					</a>
 				</div>
 			</div>
 
