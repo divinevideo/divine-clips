@@ -35,7 +35,7 @@
 
   onMount(async () => {
     // If no campaigns, load popular DiVine videos as open clips
-    if (data.campaigns.length === 0) {
+    if (!data.campaigns || data.campaigns.length === 0) {
       loadingPopular = true;
       try {
         // Funnelcake API at relay.divine.video
@@ -73,10 +73,9 @@
   <title>Campaigns — DiVine Clips</title>
 </svelte:head>
 
-<div class="min-h-screen bg-gray-950 text-white px-4 py-10">
-  <div class="max-w-6xl mx-auto">
+<div class="max-w-6xl mx-auto px-4 py-10">
 
-    {#if data.campaigns.length > 0}
+    {#if data.campaigns && data.campaigns.length > 0}
       <!-- Active Campaigns -->
       <h1 class="text-3xl font-bold mb-2">Active Campaigns</h1>
       <p class="text-gray-400 mb-8">Creators are paying for clips. Pick a campaign, share the content, earn for every view.</p>
@@ -128,7 +127,7 @@
     <div>
       <div class="flex items-baseline justify-between mb-2">
         <h2 class="text-2xl font-bold text-white">
-          {#if data.campaigns.length > 0}
+          {#if data.campaigns && data.campaigns.length > 0}
             Or clip any DiVine video
           {:else}
             Popular DiVine Videos
@@ -181,5 +180,4 @@
         </div>
       {/if}
     </div>
-  </div>
 </div>

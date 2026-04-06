@@ -91,8 +91,7 @@
 	<title>Dashboard — DiVine Clips</title>
 </svelte:head>
 
-<div class="min-h-screen bg-gray-950 text-white">
-	<div class="max-w-5xl mx-auto px-4 py-10">
+<div class="max-w-5xl mx-auto px-4 py-10">
 
 		{#if loading}
 			<div class="flex items-center justify-center py-32">
@@ -242,4 +241,3 @@
 		{/if}
 
 	</div>
-</div>
