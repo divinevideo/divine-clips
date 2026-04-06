@@ -4,15 +4,20 @@
 	import { onMount } from 'svelte';
 	import { page } from '$app/stores';
 	import { isAuthenticated } from '$lib/stores/auth';
-	import { initAuth, logout } from '$lib/stores/auth';
-	import { loginWithKeycast } from '$lib/auth';
+	import { initAuth } from '$lib/stores/auth';
+	import { loginWithKeycast, logout, restoreSession } from '$lib/auth';
 
 	let { children } = $props();
 
 	let mobileMenuOpen = $state(false);
 
-	onMount(() => {
-		initAuth();
+	onMount(async () => {
+		// Try restoring session from @divinevideo/login tokens first
+		const restored = await restoreSession();
+		if (!restored) {
+			// Fall back to localStorage token check
+			initAuth();
+		}
 	});
 
 	function toggleMobileMenu() {
@@ -62,6 +67,12 @@
 						class="px-3 py-2 rounded-md text-sm font-medium transition-colors {isActive('/campaigns') ? 'bg-purple-600 text-white' : 'text-gray-300 hover:text-white hover:bg-gray-800'}"
 					>
 						Campaigns
+					</a>
+					<a
+						href="/guide"
+						class="px-3 py-2 rounded-md text-sm font-medium transition-colors {isActive('/guide') ? 'bg-purple-600 text-white' : 'text-gray-300 hover:text-white hover:bg-gray-800'}"
+					>
+						How It Works
 					</a>
 					{#if $isAuthenticated}
 						<a
@@ -137,6 +148,13 @@
 					class="block px-3 py-2 rounded-md text-sm font-medium transition-colors {isActive('/campaigns') ? 'bg-purple-600 text-white' : 'text-gray-300 hover:text-white hover:bg-gray-800'}"
 				>
 					Campaigns
+				</a>
+				<a
+					href="/guide"
+					onclick={() => { mobileMenuOpen = false; }}
+					class="block px-3 py-2 rounded-md text-sm font-medium transition-colors {isActive('/guide') ? 'bg-purple-600 text-white' : 'text-gray-300 hover:text-white hover:bg-gray-800'}"
+				>
+					How It Works
 				</a>
 				{#if $isAuthenticated}
 					<a
