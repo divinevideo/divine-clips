@@ -36,18 +36,20 @@
     if (data.campaigns.length === 0) {
       loadingPopular = true;
       try {
-        const RELAY_API = import.meta.env.VITE_RELAY_API_URL || 'https://api.divine.video';
-        const res = await fetch(`${RELAY_API}/api/v1/videos?sort=popular&limit=24`);
+        // Funnelcake API at relay.divine.video
+        const res = await fetch('https://relay.divine.video/api/videos?sort=popular&limit=24');
         if (res.ok) {
           const result = await res.json();
-          popularVideos = (result.videos || result || []).map((v: any) => ({
-            id: v.id || v.event_id,
+          // Response is Vec<TrendingVideo> — array directly
+          const videos = Array.isArray(result) ? result : (result.videos || []);
+          popularVideos = videos.map((v: any) => ({
+            id: v.id || v.d_tag,
             title: v.title || v.content || 'Untitled',
-            thumbnail: v.thumbnail || v.thumb,
-            author_pubkey: v.pubkey || v.author_pubkey || '',
-            author_name: v.author_name || v.display_name || '',
+            thumbnail: v.thumbnail,
+            author_pubkey: v.pubkey || '',
+            author_name: v.author_name || '',
             created_at: v.created_at || v.published_at || '',
-            views: v.views || v.view_count || 0,
+            views: v.views || v.loops || 0,
           }));
         }
       } catch {

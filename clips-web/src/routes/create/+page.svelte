@@ -62,18 +62,17 @@
 		try {
 			// Fetch creator's DiVine videos from the relay
 			// Uses the funnelcake API — the auth token identifies the creator
-			const RELAY_API = import.meta.env.VITE_RELAY_API_URL || 'https://api.divine.video';
-			const res = await fetch(`${RELAY_API}/api/v1/videos?author=${$authToken}&limit=50`, {
-				headers: { 'Authorization': `Bearer ${$authToken}` }
-			});
+			// Funnelcake API: filter by author pubkey
+			const res = await fetch(`https://relay.divine.video/api/videos?sort=recent&limit=50&pubkey=${$authToken}`);
 			if (res.ok) {
 				const data = await res.json();
-				myVideos = (data.videos || data || []).map((v: any) => ({
-					id: v.id || v.event_id,
+				const videos = Array.isArray(data) ? data : (data.videos || []);
+				myVideos = videos.map((v: any) => ({
+					id: v.id || v.d_tag,
 					title: v.title || v.content || 'Untitled',
-					thumbnail: v.thumbnail || v.thumb,
+					thumbnail: v.thumbnail,
 					created_at: v.created_at || v.published_at || '',
-					d_tag: v.d_tag || v.d || v.id,
+					d_tag: v.d_tag || v.id,
 				}));
 			} else {
 				// Fallback: no videos found or API not available
