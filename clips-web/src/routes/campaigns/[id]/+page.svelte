@@ -4,6 +4,7 @@
   import { isAuthenticated } from '$lib/stores/auth';
   import { api } from '$lib/api';
   import { invalidateAll } from '$app/navigation';
+  import VideoCard from '$lib/components/VideoCard.svelte';
 
   let { data }: { data: PageData } = $props();
 
@@ -190,32 +191,52 @@
 
     <!-- Content refs -->
     {#if campaign.content_refs.length > 0}
-      <div class="bg-gray-900 rounded-xl border border-gray-800 p-5 mb-8">
-        <h2 class="text-sm font-semibold text-gray-400 uppercase tracking-wide mb-3">Source Content</h2>
-        <ul class="space-y-2">
-          {#each campaign.content_refs as ref, i}
-            <li class="flex items-center gap-3">
-              <span class="text-xs text-gray-500 w-5 shrink-0">{i + 1}.</span>
-              <a
-                href={ref}
-                target="_blank"
-                rel="noopener noreferrer"
-                class="text-purple-400 hover:text-purple-300 text-sm font-mono truncate transition-colors"
-                title={ref}
-              >
-                {ref.length > 60 ? ref.slice(0, 60) + '...' : ref}
-              </a>
-              <a
-                href={ref}
-                target="_blank"
-                rel="noopener noreferrer"
-                class="ml-auto shrink-0 text-xs text-gray-500 hover:text-gray-300 border border-gray-700 hover:border-gray-500 px-2 py-0.5 rounded transition-colors"
-              >
-                Download
-              </a>
-            </li>
-          {/each}
-        </ul>
+      {@const firstRef = campaign.content_refs[0]}
+      {@const videoUrl = firstRef.startsWith('http') ? firstRef : `https://media.divine.video/${firstRef}`}
+      <div class="mb-8">
+        <h2 class="text-sm font-semibold text-gray-400 uppercase tracking-wide mb-4">Source Content</h2>
+
+        <!-- First content ref rendered as a video player -->
+        <div class="max-w-xs mx-auto mb-6">
+          <a href="/submit?campaign={campaign.id}&video={firstRef}">
+            <VideoCard
+              src={videoUrl}
+              title={campaign.title}
+              subtitle="Tap to clip this video"
+            />
+          </a>
+        </div>
+
+        <!-- Remaining refs as download links -->
+        {#if campaign.content_refs.length > 1}
+          <div class="bg-gray-900 rounded-xl border border-gray-800 p-5">
+            <p class="text-xs text-gray-500 mb-3">Additional source files:</p>
+            <ul class="space-y-2">
+              {#each campaign.content_refs.slice(1) as ref, i}
+                <li class="flex items-center gap-3">
+                  <span class="text-xs text-gray-500 w-5 shrink-0">{i + 2}.</span>
+                  <a
+                    href={ref.startsWith('http') ? ref : `https://media.divine.video/${ref}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    class="text-purple-400 hover:text-purple-300 text-sm font-mono truncate transition-colors"
+                    title={ref}
+                  >
+                    {ref.length > 60 ? ref.slice(0, 60) + '...' : ref}
+                  </a>
+                  <a
+                    href={ref.startsWith('http') ? ref : `https://media.divine.video/${ref}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    class="ml-auto shrink-0 text-xs text-gray-500 hover:text-gray-300 border border-gray-700 hover:border-gray-500 px-2 py-0.5 rounded transition-colors"
+                  >
+                    Download
+                  </a>
+                </li>
+              {/each}
+            </ul>
+          </div>
+        {/if}
       </div>
     {/if}
 

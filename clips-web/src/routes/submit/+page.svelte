@@ -17,6 +17,10 @@
   let errorMsg = $state('');
   let validationError = $state('');
 
+  // Pre-fill from URL params
+  let prefilledVideoId = $state('');
+  let prefilledVideoTitle = $state('');
+
   const platformDomains: Record<string, string[]> = {
     tiktok: ['tiktok.com', 'vm.tiktok.com'],
     instagram: ['instagram.com', 'instagr.am'],
@@ -32,8 +36,26 @@
   };
 
   onMount(async () => {
-    // Pre-fill campaign from URL query param
+    // Pre-fill campaign and video from URL query params
     const campaignParam = $page.url.searchParams.get('campaign');
+    const videoParam = $page.url.searchParams.get('video');
+
+    if (videoParam) {
+      prefilledVideoId = videoParam;
+      // Try to fetch video title from relay API
+      try {
+        const res = await fetch(`https://relay.divine.video/api/videos/${videoParam}`);
+        if (res.ok) {
+          const v = await res.json();
+          prefilledVideoTitle = v.title || v.content || videoParam;
+        } else {
+          prefilledVideoTitle = videoParam;
+        }
+      } catch {
+        prefilledVideoTitle = videoParam;
+      }
+    }
+
     try {
       campaigns = await api.campaigns.list();
       if (campaignParam && campaigns.some(c => c.id === campaignParam)) {
@@ -129,7 +151,17 @@
     </a>
 
     <h1 class="text-2xl font-bold mb-1">Submit a Clip</h1>
-    <p class="text-gray-400 text-sm mb-8">Paste the link to your published clip and start earning sats.</p>
+    <p class="text-gray-400 text-sm mb-4">Paste the link to your published clip and start earning sats.</p>
+
+    {#if prefilledVideoId}
+      <div class="bg-purple-600/10 border border-purple-500/30 rounded-xl px-4 py-3 mb-6 flex items-center gap-3">
+        <span class="text-purple-400 text-lg">🎬</span>
+        <div>
+          <p class="text-xs text-gray-500 uppercase tracking-wider mb-0.5">Clipping</p>
+          <p class="text-white text-sm font-medium truncate">{prefilledVideoTitle || prefilledVideoId}</p>
+        </div>
+      </div>
+    {/if}
 
     {#if success}
       <div class="bg-green-900/40 border border-green-700 rounded-xl p-6 text-center">

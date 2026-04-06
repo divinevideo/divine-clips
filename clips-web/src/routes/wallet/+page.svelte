@@ -63,7 +63,7 @@
 			balance = balData.balance_sats;
 			transactions = histData.transactions;
 		} catch {
-			// API not available — show empty wallet UI
+			error = 'api_unreachable';
 		} finally {
 			loading = false;
 		}
@@ -82,8 +82,16 @@
 			</div>
 
 		{:else if error}
-			<div class="bg-red-500/10 border border-red-500/30 text-red-400 rounded-xl p-6 text-center">
-				{error}
+			<div class="bg-gray-900 border border-gray-800 rounded-xl p-8 text-center max-w-md mx-auto mt-16">
+				<div class="text-4xl mb-4">⚡</div>
+				<h2 class="text-white font-semibold text-lg mb-2">Can't reach the API right now</h2>
+				<p class="text-gray-400 text-sm mb-6">The backend may still be starting up. Try refreshing in a minute.</p>
+				<button
+					onclick={() => window.location.reload()}
+					class="bg-purple-600 hover:bg-purple-500 transition-colors text-white font-semibold px-6 py-2.5 rounded-xl text-sm"
+				>
+					Retry
+				</button>
 			</div>
 
 		{:else}
