@@ -7,7 +7,7 @@ on:
 
 jobs:
   backend:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04-16core
     defaults:
       run:
         working-directory: clipcrate
@@ -21,7 +21,7 @@ jobs:
       - run: cargo test --workspace --lib
 
   frontend:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04-16core
     defaults:
       run:
         working-directory: clips-web
@@ -36,7 +36,7 @@ jobs:
       - run: npm run build
 
   verifier:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04-16core
     defaults:
       run:
         working-directory: clips-verifier
