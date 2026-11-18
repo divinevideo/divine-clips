@@ -105,32 +105,56 @@ async fn configured_private_tls_transmits_credentials_and_database() {
 
 #[test]
 fn malformed_configuration_never_echoes_input() {
-    for values in [
-        [
-            Some("https://user:synthetic-secret@example.invalid"),
-            None,
-            None,
-            None,
-            None,
-        ],
-        [
-            Some("https://example.invalid?password=synthetic-secret"),
-            None,
-            None,
-            None,
-            None,
-        ],
-        [Some("file:///synthetic-secret"), None, None, None, None],
-        [None, Some("synthetic-secret"), None, None, None],
-        [None, None, Some("synthetic-secret"), None, None],
-        [None, Some(""), Some("synthetic-secret"), None, None],
-        [None, None, None, Some(""), None],
-        [None, None, None, None, Some("")],
+    // Each case changes one setting of this valid HTTPS configuration, so only the
+    // check under test can reject it.
+    let https = Some("https://example.invalid");
+    assert!(ConnectionConfig::parse([https.map(str::to_owned), None, None, None, None]).is_ok());
+    let mut cases = vec![(
+        [Some("synthetic-secret"), None, None, None, None],
+        "Invalid CLICKHOUSE_URL",
+    )];
+    for url in [
+        "ftp://synthetic-secret.invalid",
+        "https://synthetic-secret@example.invalid",
+        "https://:synthetic-secret@example.invalid",
+        "https://example.invalid?password=synthetic-secret",
+        "https://example.invalid#synthetic-secret",
     ] {
+        cases.push((
+            [Some(url), None, None, None, None],
+            "CLICKHOUSE_URL must be an HTTP(S) endpoint without credentials, query or fragment",
+        ));
+    }
+    for (user, password) in [
+        (Some("synthetic-secret"), None),
+        (None, Some("synthetic-secret")),
+        (Some(""), Some("synthetic-secret")),
+        (Some(" "), Some("synthetic-secret")),
+        (Some("synthetic-secret"), Some("")),
+        (Some("synthetic-secret\n"), Some("pw")),
+        (Some("reader"), Some("synthetic-secret\r")),
+    ] {
+        cases.push((
+            [https, user, password, None, None],
+            "CLICKHOUSE_USER and CLICKHOUSE_PASSWORD must both be nonempty valid header values",
+        ));
+    }
+    for database in ["", " ", "synthetic-secret\0"] {
+        cases.push((
+            [https, None, None, Some(database), None],
+            "Invalid CLICKHOUSE_DATABASE",
+        ));
+    }
+    cases.push((
+        [https, None, None, None, Some("")],
+        "Invalid CLICKHOUSE_CA_CERT_PATH",
+    ));
+    for (values, expected) in cases {
         let error = ConnectionConfig::parse(values.map(|v| v.map(str::to_owned)))
             .err()
-            .expect("invalid config");
-        assert!(!error.to_string().contains("synthetic-secret"));
+            .expect(expected);
+        assert_eq!(error.to_string(), expected);
+        assert!(!format!("{error:#}").contains("synthetic-secret"));
     }
 }
 
@@ -179,14 +203,49 @@ async fn certificate_trust_and_hostname_are_both_required() {
 
 #[test]
 fn explicitly_configured_ca_cannot_fall_back_to_public_roots() {
+    const MAX_CA_BYTES: usize = 1024 * 1024;
     let dir = tempfile::tempdir().unwrap();
-    let ca = dir.path().join("ca.pem");
-    for bytes in [
-        None,
-        Some(Vec::new()),
-        Some(b"not a certificate".to_vec()),
-        Some(vec![b'x'; 1024 * 1024 + 1]),
-    ] {
+    let valid = rcgen::generate_simple_self_signed(vec!["localhost".into()])
+        .unwrap()
+        .cert
+        .pem();
+    // Text after the last PEM block is ignored, so these bundles differ only in size.
+    let padded = |len: usize| {
+        let mut bytes = valid.clone().into_bytes();
+        bytes.resize(len, b'\n');
+        Some(bytes)
+    };
+    // A usable certificate first, so only the later block can make loading fail.
+    let with_block = |block: &str| Some(format!("{valid}{block}").into_bytes());
+    for (i, (bytes, expected)) in [
+        (None, Err("Cannot read CLICKHOUSE_CA_CERT_PATH")),
+        (
+            Some(Vec::new()),
+            Err("ClickHouse CA bundle contains no certificates"),
+        ),
+        (
+            Some(b"not a certificate".to_vec()),
+            Err("ClickHouse CA bundle contains no certificates"),
+        ),
+        (padded(MAX_CA_BYTES), Ok(())),
+        (
+            padded(MAX_CA_BYTES + 1),
+            Err("ClickHouse CA bundle exceeds 1 MiB"),
+        ),
+        (
+            with_block("-----BEGIN CERTIFICATE-----\n!!!!\n-----END CERTIFICATE-----\n"),
+            Err("Invalid ClickHouse CA PEM"),
+        ),
+        (
+            with_block("-----BEGIN CERTIFICATE-----\nAAAA\n-----END CERTIFICATE-----\n"),
+            Err("Invalid ClickHouse CA certificate"),
+        ),
+    ]
+    .into_iter()
+    .enumerate()
+    {
+        // A separate file per case, so the missing-file case cannot see an earlier write.
+        let ca = dir.path().join(format!("ca-{i}.pem"));
         if let Some(bytes) = bytes {
             std::fs::write(&ca, bytes).unwrap();
         }
@@ -198,7 +257,8 @@ fn explicitly_configured_ca_cannot_fall_back_to_public_roots() {
             Some(ca.to_str().unwrap().into()),
         ])
         .unwrap();
-        assert!(connect(config).is_err());
+        let result = connect(config).map(drop).map_err(|e| e.to_string());
+        assert_eq!(result, expected.map_err(str::to_owned), "case {i}");
     }
 }
 
@@ -255,7 +315,13 @@ fn credentials_and_private_ca_never_allow_plaintext() {
             Some("ca.pem"),
         ],
     ] {
-        assert!(ConnectionConfig::parse(values.map(|v| v.map(str::to_owned))).is_err());
+        let error = ConnectionConfig::parse(values.map(|v| v.map(str::to_owned)))
+            .err()
+            .expect("plaintext must be rejected");
+        assert_eq!(
+            error.to_string(),
+            "ClickHouse credentials and custom CA require HTTPS"
+        );
     }
     let config = ConnectionConfig::parse([None, None, None, None, None]).unwrap();
     assert_eq!(config.url, "http://localhost:8123");
