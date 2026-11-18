@@ -104,6 +104,16 @@ Services are configured through environment variables.
 - `CDK_MINT_URL` — Cashu mint endpoint used by the wallet.
 - `RUST_LOG` — tracing filter.
 
+The ClickHouse server certificate must name the `CLICKHOUSE_URL` host in its
+subjectAltName, as an IP address entry when the URL uses an IP (the common name is
+not checked). It must be an X.509 v3 certificate that is not itself a CA certificate
+(no `CA:TRUE`), must include `serverAuth` if it lists extended key usages, and
+must chain to a certificate in the bundle, directly or through intermediates the
+server sends. A self-signed server certificate can be its own bundle only if it meets
+these rules. One generated with only a common name, as with the
+`openssl req -x509 -subj "/CN=localhost"` example in ClickHouse's default
+`config.xml`, does not.
+
 ClickHouse connection configuration is validated before Postgres initialization.
 Invalid explicit settings fail startup without printing their values. Connectivity
 is still established when a query runs; successful startup alone does not prove
