@@ -92,7 +92,14 @@ Services are configured through environment variables.
 - `CLICKHOUSE_URL` — ClickHouse HTTP(S) endpoint (default `http://localhost:8123`). Credentials, query parameters and fragments are not accepted in this URL.
 - `CLICKHOUSE_USER` and `CLICKHOUSE_PASSWORD` — optional credentials; set both to nonempty values through the deployment's secret mechanism. Credentials require HTTPS. When both are absent, the server's default anonymous connection behavior is preserved.
 - `CLICKHOUSE_DATABASE` — optional database name; when absent, the server's default database is used.
-- `CLICKHOUSE_CA_CERT_PATH` — optional PEM trust bundle for a private HTTPS endpoint, limited to 1 MiB. When set, only this bundle is trusted; unreadable, empty or invalid bundles fail startup. Otherwise public WebPKI roots are used. Hostname and certificate verification always remain enabled.
+- `CLICKHOUSE_CA_CERT_PATH` — optional PEM trust bundle for a private HTTPS endpoint, limited to 1 MiB. When set, only this bundle is trusted; startup fails if the file can't be read, is over 1 MiB, holds no certificates, or has a `CERTIFICATE` block that doesn't decode to a certificate. Otherwise public WebPKI roots are used. Hostname and certificate verification always remain enabled.
+  Blocks labelled `TRUSTED CERTIFICATE` or `X509 CERTIFICATE` are ignored, and so is
+  any block whose `-----BEGIN` line has something in front of it, such as a byte-order
+  mark at the start of the file. Certificates must use RSA keys of 2048 to 8192 bits,
+  ECDSA P-256 or P-384 keys, or Ed25519 keys. Signatures on the server certificate and
+  on intermediates the server sends must use SHA-256, SHA-384 or SHA-512 with RSA,
+  SHA-256 or SHA-384 with ECDSA, or Ed25519. A bundle that breaks these rules can pass
+  startup and then fail every TLS handshake.
 - `PORT` — HTTP port to listen on (default `8080`).
 - `CDK_MINT_URL` — Cashu mint endpoint used by the wallet.
 - `RUST_LOG` — tracing filter.
