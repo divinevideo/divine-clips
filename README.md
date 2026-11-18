@@ -121,6 +121,8 @@ database access. Before changing an endpoint, verify an authenticated query with
 the deployed image and its mounted CA bundle. Analytics retain their existing
 empty-result fallback on query failure, so an empty API response is not an access
 or data-equivalence check. This configuration does not change endpoints by itself.
+A private CA must be supplied through `CLICKHOUSE_CA_CERT_PATH`: the ClickHouse
+client never reads `SSL_CERT_FILE`, `SSL_CERT_DIR` or the system trust store.
 
 **Frontend (`clips-web`)**
 
