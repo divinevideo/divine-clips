@@ -87,10 +87,21 @@ Services are configured through environment variables.
 **Backend (`clipcrate`)**
 
 - `DATABASE_URL` — Postgres connection string (default `postgres://localhost:5432/clipcrate`).
-- `CLICKHOUSE_URL` — ClickHouse HTTP endpoint (default `http://localhost:8123`).
+- `CLICKHOUSE_URL` — ClickHouse HTTP(S) endpoint (default `http://localhost:8123`). Credentials, query parameters and fragments are not accepted in this URL.
+- `CLICKHOUSE_USER` and `CLICKHOUSE_PASSWORD` — optional credentials; set both to nonempty values through the deployment's secret mechanism. Credentials require HTTPS. When both are absent, the server's default anonymous connection behavior is preserved.
+- `CLICKHOUSE_DATABASE` — optional database name; when absent, the server's default database is used.
+- `CLICKHOUSE_CA_CERT_PATH` — optional PEM trust bundle for a private HTTPS endpoint, limited to 1 MiB. When set, only this bundle is trusted; unreadable, empty or invalid bundles fail startup. Otherwise public WebPKI roots are used. Hostname and certificate verification always remain enabled.
 - `PORT` — HTTP port to listen on (default `8080`).
 - `CDK_MINT_URL` — Cashu mint endpoint used by the wallet.
 - `RUST_LOG` — tracing filter.
+
+ClickHouse connection configuration is validated before Postgres initialization.
+Invalid explicit settings fail startup without printing their values. Connectivity
+is still established when a query runs; successful startup alone does not prove
+database access. Before changing an endpoint, verify an authenticated query with
+the deployed image and its mounted CA bundle. Analytics retain their existing
+empty-result fallback on query failure, so an empty API response is not an access
+or data-equivalence check. This configuration does not change endpoints by itself.
 
 **Frontend (`clips-web`)**
 
