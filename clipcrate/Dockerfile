@@ -1,7 +1,8 @@
-FROM rust:latest AS builder
+# Keep the compiler aligned with rust-toolchain.toml and backend CI.
+FROM rust:1.98.1-bookworm AS builder
 WORKDIR /app
 COPY . .
-RUN cargo build --release -p clipcrate
+RUN cargo build --locked --release -p clipcrate
 
 FROM debian:bookworm-slim
 RUN apt-get update && apt-get install -y ca-certificates && rm -rf /var/lib/apt/lists/*

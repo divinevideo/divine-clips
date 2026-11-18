@@ -52,12 +52,14 @@ docker compose up
 
 ### Backend (`clipcrate/`)
 
-Requires a Rust toolchain, plus Postgres and ClickHouse (the `docker compose` stack provides both). Migrations run automatically on startup.
+Requires Rust 1.98.1, plus Postgres and ClickHouse (the `docker compose` stack provides both). Rustup selects the pinned compiler from `clipcrate/rust-toolchain.toml`; CI and the Docker builder use the same version. Migrations run automatically on startup.
+
+SQLx 0.8.0 does not compile with Rust 1.100's changed never-type inference. Updating SQLx currently conflicts with the wallet's SQLite dependency, as recorded in [#13](https://github.com/divinevideo/divine-clips/issues/13) and [#14](https://github.com/divinevideo/divine-clips/pull/14). Update those dependencies together before advancing the three compiler pins. The pin restores reproducible builds; it does not resolve the remaining dependency advisories.
 
 ```sh
 cd clipcrate
-cargo check --all-targets
-cargo test --workspace --lib
+cargo check --locked --all-targets
+cargo test --locked --workspace --lib
 cargo run -p clipcrate      # serves on PORT (default 8080)
 ```
 
