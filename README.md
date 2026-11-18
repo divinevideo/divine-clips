@@ -90,7 +90,7 @@ Services are configured through environment variables.
 
 - `DATABASE_URL` — Postgres connection string (default `postgres://localhost:5432/clipcrate`).
 - `CLICKHOUSE_URL` — ClickHouse HTTP(S) endpoint (default `http://localhost:8123`). Credentials, query parameters and fragments are not accepted in this URL.
-- `CLICKHOUSE_USER` and `CLICKHOUSE_PASSWORD` — optional credentials; set both to nonempty values through the deployment's secret mechanism. Credentials require HTTPS. When both are absent, the server's default anonymous connection behavior is preserved.
+- `CLICKHOUSE_USER` and `CLICKHOUSE_PASSWORD` — optional credentials; set both to nonempty values through the deployment's secret mechanism. Credentials require HTTPS. When both are absent, requests carry no credentials and the server applies its default user, over HTTP or HTTPS. Earlier builds could not connect over HTTPS at all, so an `https` `CLICKHOUSE_URL` without credentials starts receiving these anonymous requests after upgrading.
 - `CLICKHOUSE_DATABASE` — optional database name; when absent, the server's default database is used.
 - `CLICKHOUSE_CA_CERT_PATH` — optional PEM trust bundle for a private HTTPS endpoint, limited to 1 MiB. When set, only this bundle is trusted; startup fails if the file can't be read, is over 1 MiB, holds no certificates, or has a `CERTIFICATE` block that doesn't decode to a certificate. Otherwise public WebPKI roots are used. Hostname and certificate verification always remain enabled.
   Blocks labelled `TRUSTED CERTIFICATE` or `X509 CERTIFICATE` are ignored, and so is
