@@ -4,6 +4,9 @@ use sqlx::PgPool;
 const BASE_CPM_SATS: i32 = 1000;
 const PER_VIDEO_BUDGET: i64 = 10000;
 
+#[cfg(test)]
+mod postgres_tests;
+
 pub async fn run_auto_campaign_listener(db: PgPool) {
     loop {
         if let Err(e) = run_listener(&db).await {
@@ -57,7 +60,7 @@ async fn handle_video(db: &PgPool, event: &Event) -> anyhow::Result<()> {
     sqlx::query(
         "INSERT INTO campaigns (creator_pubkey, title, budget_total_sats, budget_remaining_sats, cpm_sats, status, source, divine_video_event_id, content_refs, target_platforms)
          VALUES ($1, $2, $3, $3, $4, 'active', 'auto', $5, ARRAY[$6], ARRAY['tiktok','instagram','youtube','x'])
-         ON CONFLICT (divine_video_event_id) DO NOTHING"
+         ON CONFLICT (divine_video_event_id) WHERE divine_video_event_id IS NOT NULL DO NOTHING"
     )
     .bind(&creator)
     .bind(format!("Clip: {title}"))

@@ -8,6 +8,20 @@ on:
 jobs:
   backend:
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: clipcrate_test
+          POSTGRES_PASSWORD: synthetic_test_password
+          POSTGRES_DB: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U clipcrate_test -d postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
     defaults:
       run:
         working-directory: clipcrate
@@ -21,6 +35,10 @@ jobs:
           workspaces: clipcrate
       - run: cargo check --locked --all-targets
       - run: cargo test --locked --workspace --lib
+      - name: PostgreSQL campaign and leaderboard regressions
+        env:
+          DATABASE_URL: postgres://clipcrate_test:synthetic_test_password@localhost:5432/postgres
+        run: cargo test --locked -p clipcrate-api --lib postgres_ -- --ignored
 
   frontend:
     runs-on: ubuntu-latest

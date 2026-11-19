@@ -320,9 +320,15 @@ pub async fn get_leaderboard(
     period: &str,
     limit: i64,
 ) -> Result<Vec<LeaderboardEntry>> {
-    let period_filter = match period {
+    let submission_period_filter = match period {
         "week" => "AND s.submitted_at > NOW() - INTERVAL '7 days'",
         "month" => "AND s.submitted_at > NOW() - INTERVAL '30 days'",
+        _ => "",
+    };
+
+    let payout_period_filter = match period {
+        "week" => "AND p.created_at > NOW() - INTERVAL '7 days'",
+        "month" => "AND p.created_at > NOW() - INTERVAL '30 days'",
         _ => "",
     };
 
@@ -337,7 +343,7 @@ pub async fn get_leaderboard(
             ORDER BY value DESC
             LIMIT $1
             "#,
-            period_filter
+            submission_period_filter
         ),
         "best_clip" => format!(
             r#"
@@ -349,7 +355,7 @@ pub async fn get_leaderboard(
             ORDER BY value DESC
             LIMIT $1
             "#,
-            period_filter
+            submission_period_filter
         ),
         // default: earnings
         _ => format!(
@@ -362,7 +368,7 @@ pub async fn get_leaderboard(
             ORDER BY value DESC
             LIMIT $1
             "#,
-            period_filter
+            payout_period_filter
         ),
     };
 
