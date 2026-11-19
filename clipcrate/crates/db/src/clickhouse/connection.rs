@@ -1,5 +1,6 @@
 use anyhow::{anyhow, ensure, Result};
-use std::{io::Read, sync::Arc, time::Duration};
+use rustls::pki_types::{pem::PemObject, CertificateDer};
+use std::{io::Read, path::Path, sync::Arc, time::Duration};
 
 pub(super) struct ConnectionConfig {
     url: String,
@@ -78,9 +79,9 @@ pub(super) fn from_env() -> Result<clickhouse::Client> {
     ])?)
 }
 
-pub(super) fn connect(config: ConnectionConfig) -> Result<clickhouse::Client> {
+fn trust_roots(ca_path: Option<&Path>) -> Result<rustls::RootCertStore> {
     let mut roots = rustls::RootCertStore::empty();
-    if let Some(path) = config.ca_path {
+    if let Some(path) = ca_path {
         const MAX_CA_BYTES: u64 = 1024 * 1024;
         let file = std::fs::File::open(path)
             .map_err(|_| anyhow!("Cannot read CLICKHOUSE_CA_CERT_PATH"))?;
@@ -92,7 +93,7 @@ pub(super) fn connect(config: ConnectionConfig) -> Result<clickhouse::Client> {
             pem.len() as u64 <= MAX_CA_BYTES,
             "ClickHouse CA bundle exceeds 1 MiB"
         );
-        for cert in rustls_pemfile::certs(&mut pem.as_slice()) {
+        for cert in CertificateDer::pem_slice_iter(&pem) {
             let cert = cert.map_err(|_| anyhow!("Invalid ClickHouse CA PEM"))?;
             roots
                 .add(cert)
@@ -105,6 +106,11 @@ pub(super) fn connect(config: ConnectionConfig) -> Result<clickhouse::Client> {
     } else {
         roots.extend(webpki_roots::TLS_SERVER_ROOTS.iter().cloned());
     }
+    Ok(roots)
+}
+
+pub(super) fn connect(config: ConnectionConfig) -> Result<clickhouse::Client> {
+    let roots = trust_roots(config.ca_path.as_deref().map(Path::new))?;
     let tls = rustls::ClientConfig::builder_with_provider(Arc::new(
         rustls::crypto::ring::default_provider(),
     ))

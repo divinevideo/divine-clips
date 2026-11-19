@@ -202,6 +202,22 @@ async fn certificate_trust_and_hostname_are_both_required() {
 }
 
 #[test]
+fn trust_roots_use_public_roots_or_only_the_configured_bundle() {
+    let public = trust_roots(None).unwrap();
+    assert_eq!(public.roots, webpki_roots::TLS_SERVER_ROOTS);
+
+    let dir = tempfile::tempdir().unwrap();
+    let ca = dir.path().join("ca.pem");
+    let cert = rcgen::generate_simple_self_signed(vec!["localhost".into()])
+        .unwrap()
+        .cert;
+    std::fs::write(&ca, cert.pem()).unwrap();
+    let mut expected = rustls::RootCertStore::empty();
+    expected.add(cert.der().clone()).unwrap();
+    assert_eq!(trust_roots(Some(&ca)).unwrap().roots, expected.roots);
+}
+
+#[test]
 fn explicitly_configured_ca_cannot_fall_back_to_public_roots() {
     const MAX_CA_BYTES: usize = 1024 * 1024;
     let dir = tempfile::tempdir().unwrap();
