@@ -63,6 +63,13 @@ cargo test --locked --workspace --lib
 cargo run -p clipcrate      # serves on PORT (default 8080)
 ```
 
+The campaign-insertion and leaderboard regressions use a real PostgreSQL server.
+Set `DATABASE_URL` to a disposable server with permission to create databases,
+then run `cargo test --locked -p clipcrate-api --lib postgres_ -- --ignored`.
+SQLx creates a separate migrated database for each test and removes it on success.
+Backend CI runs these tests explicitly against PostgreSQL 16; ordinary library
+tests leave them ignored so a database service is not needed for unit tests.
+
 ### Frontend (`clips-web/`)
 
 ```sh
