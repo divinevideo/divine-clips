@@ -3,6 +3,8 @@ use std::sync::Arc;
 use clickhouse::Row;
 use serde::Deserialize;
 
+mod connection;
+
 #[derive(Clone)]
 pub struct ClickHouseClient {
     client: Arc<clickhouse::Client>,
@@ -27,10 +29,10 @@ pub struct DailyViews {
 }
 
 impl ClickHouseClient {
-    pub fn new(url: &str) -> Self {
-        Self {
-            client: Arc::new(clickhouse::Client::default().with_url(url)),
-        }
+    pub fn from_env() -> anyhow::Result<Self> {
+        Ok(Self {
+            client: Arc::new(connection::from_env()?),
+        })
     }
 
     /// Returns time-series view snapshots for a single submission.

@@ -13,12 +13,14 @@ jobs:
         working-directory: clipcrate
     steps:
       - uses: actions/checkout@v4
-      - uses: dtolnay/rust-toolchain@stable
+      # TODO(#13): Upgrade SQLx and the wallet SQLite dependency together before
+      # moving past the compiler pinned in clipcrate/rust-toolchain.toml.
+      - uses: dtolnay/rust-toolchain@1.98.1
       - uses: Swatinem/rust-cache@v2
         with:
           workspaces: clipcrate
-      - run: cargo check --all-targets
-      - run: cargo test --workspace --lib
+      - run: cargo check --locked --all-targets
+      - run: cargo test --locked --workspace --lib
 
   frontend:
     runs-on: ubuntu-latest

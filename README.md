@@ -52,12 +52,14 @@ docker compose up
 
 ### Backend (`clipcrate/`)
 
-Requires a Rust toolchain, plus Postgres and ClickHouse (the `docker compose` stack provides both). Migrations run automatically on startup.
+Requires Rust 1.98.1, plus Postgres and ClickHouse (the `docker compose` stack provides both). Rustup selects the compiler from `clipcrate/rust-toolchain.toml` in local, CI and Docker builds; the CI action version and the Docker builder tag only preinstall that release, so changing them without the toolchain file does not change the compiler. Migrations run automatically on startup.
+
+SQLx 0.8.0 does not compile with Rust 1.100's changed never-type inference. Updating SQLx currently conflicts with the wallet's SQLite dependency, as recorded in [#14](https://github.com/divinevideo/divine-clips/pull/14). Update those dependencies together before advancing the three compiler pins. The pin restores reproducible builds; it does not resolve the remaining dependency advisories.
 
 ```sh
 cd clipcrate
-cargo check --all-targets
-cargo test --workspace --lib
+cargo check --locked --all-targets
+cargo test --locked --workspace --lib
 cargo run -p clipcrate      # serves on PORT (default 8080)
 ```
 
@@ -87,10 +89,40 @@ Services are configured through environment variables.
 **Backend (`clipcrate`)**
 
 - `DATABASE_URL` — Postgres connection string (default `postgres://localhost:5432/clipcrate`).
-- `CLICKHOUSE_URL` — ClickHouse HTTP endpoint (default `http://localhost:8123`).
+- `CLICKHOUSE_URL` — ClickHouse HTTP(S) endpoint (default `http://localhost:8123`). Credentials, query parameters and fragments are not accepted in this URL.
+- `CLICKHOUSE_USER` and `CLICKHOUSE_PASSWORD` — optional credentials; set both to nonempty values through the deployment's secret mechanism. Credentials require HTTPS. When both are absent, requests carry no credentials and the server applies its default user, over HTTP or HTTPS. Earlier builds could not connect over HTTPS at all, so an `https` `CLICKHOUSE_URL` without credentials starts receiving these anonymous requests after upgrading.
+- `CLICKHOUSE_DATABASE` — optional database name; when absent, the server's default database is used.
+- `CLICKHOUSE_CA_CERT_PATH` — optional PEM trust bundle for a private HTTPS endpoint, limited to 1 MiB. When set, only this bundle is trusted; startup fails if the file can't be read, is over 1 MiB, holds no certificates, or has a `CERTIFICATE` block that doesn't decode to a certificate. Otherwise public WebPKI roots are used. Hostname and certificate verification always remain enabled.
+  Blocks labelled `TRUSTED CERTIFICATE` or `X509 CERTIFICATE` are ignored, and so is
+  any block whose `-----BEGIN` line has something in front of it, such as a byte-order
+  mark at the start of the file. Certificates must use RSA keys of 2048 to 8192 bits,
+  ECDSA P-256 or P-384 keys, or Ed25519 keys. Signatures on the server certificate and
+  on intermediates the server sends must use SHA-256, SHA-384 or SHA-512 with RSA,
+  SHA-256 or SHA-384 with ECDSA, or Ed25519. A bundle that breaks these rules can pass
+  startup and then fail every TLS handshake.
 - `PORT` — HTTP port to listen on (default `8080`).
 - `CDK_MINT_URL` — Cashu mint endpoint used by the wallet.
 - `RUST_LOG` — tracing filter.
+
+The ClickHouse server certificate must name the `CLICKHOUSE_URL` host in its
+subjectAltName, as an IP address entry when the URL uses an IP (the common name is
+not checked). It must be an X.509 v3 certificate that is not itself a CA certificate
+(no `CA:TRUE`), must include `serverAuth` if it lists extended key usages, and
+must chain to a certificate in the bundle, directly or through intermediates the
+server sends. A self-signed server certificate can be its own bundle only if it meets
+these rules. One generated with only a common name, as with the
+`openssl req -x509 -subj "/CN=localhost"` example in ClickHouse's default
+`config.xml`, does not.
+
+ClickHouse connection configuration is validated before Postgres initialization.
+Invalid explicit settings fail startup without printing their values. Connectivity
+is still established when a query runs; successful startup alone does not prove
+database access. Before changing an endpoint, verify an authenticated query with
+the deployed image and its mounted CA bundle. Analytics retain their existing
+empty-result fallback on query failure, so an empty API response is not an access
+or data-equivalence check. This configuration does not change endpoints by itself.
+A private CA must be supplied through `CLICKHOUSE_CA_CERT_PATH`: the ClickHouse
+client never reads `SSL_CERT_FILE`, `SSL_CERT_DIR` or the system trust store.
 
 **Frontend (`clips-web`)**
 
