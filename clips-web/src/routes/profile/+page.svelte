@@ -1,10 +1,10 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { goto } from '$app/navigation';
-	import { isAuthenticated, authToken, logout } from '$lib/stores/auth';
-	import { api } from '$lib/api';
-	import { platformLabel, PLATFORMS, formatSats } from '$lib/utils';
-	import type { DashboardData } from '$lib/types';
+	import { isAuthenticated, authToken, logout } from '#lib/stores/auth.ts';
+	import { api } from '#lib/api.ts';
+	import { platformLabel, PLATFORMS, formatSats } from '#lib/utils.ts';
+	import type { DashboardData } from '#lib/types.ts';
 
 	let stats = $state<DashboardData | null>(null);
 	let loadingStats = $state(true);

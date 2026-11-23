@@ -1,8 +1,8 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import type { PageData } from './$types';
-  import { budgetPercent, platformLabel, timeAgo, formatSats, formatMoney, formatCpm, formatMoneyFull } from '$lib/utils';
-  import VideoCard from '$lib/components/VideoCard.svelte';
+  import { budgetPercent, platformLabel, timeAgo, formatSats, formatMoney, formatCpm, formatMoneyFull } from '#lib/utils.ts';
+  import VideoCard from '#lib/components/VideoCard.svelte';
 
   let { data }: { data: PageData } = $props();
 

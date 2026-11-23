@@ -1,10 +1,10 @@
 <script lang="ts">
 	import { onMount, onDestroy } from 'svelte';
-	import { feedEvents, addFeedEvent } from '$lib/stores/feed';
-	import { connectToFeed } from '$lib/nostr';
-	import { api } from '$lib/api';
-	import { formatSats, formatMoney, formatCpm, formatMoneyFull, timeAgo } from '$lib/utils';
-	import type { Campaign } from '$lib/types';
+	import { feedEvents, addFeedEvent } from '#lib/stores/feed.ts';
+	import { connectToFeed } from '#lib/nostr.ts';
+	import { api } from '#lib/api.ts';
+	import { formatSats, formatMoney, formatCpm, formatMoneyFull, timeAgo } from '#lib/utils.ts';
+	import type { Campaign } from '#lib/types.ts';
 
 	const API_BASE = import.meta.env.VITE_API_URL || 'https://api.clips.divine.video';
 

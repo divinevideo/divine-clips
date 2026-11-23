@@ -1,10 +1,10 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import { api } from '$lib/api';
-	import { formatSats, formatViews, timeAgo, platformLabel } from '$lib/utils';
-	import { isAuthenticated, initAuth } from '$lib/stores/auth';
-	import { loginWithKeycast } from '$lib/auth';
-	import type { DashboardData, Submission } from '$lib/types';
+	import { api } from '#lib/api.ts';
+	import { formatSats, formatViews, timeAgo, platformLabel } from '#lib/utils.ts';
+	import { isAuthenticated, initAuth } from '#lib/stores/auth.ts';
+	import { loginWithKeycast } from '#lib/auth.ts';
+	import type { DashboardData, Submission } from '#lib/types.ts';
 
 	let data: DashboardData | null = $state(null);
 	let submissions: Submission[] = $state([]);

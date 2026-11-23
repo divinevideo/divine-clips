@@ -1,12 +1,12 @@
 <script lang="ts">
-	import favicon from '$lib/assets/favicon.svg';
+	import favicon from '#lib/assets/favicon.svg';
 	import '../app.css';
 	import { onMount } from 'svelte';
-	import { page } from '$app/stores';
-	import { isAuthenticated, authToken } from '$lib/stores/auth';
-	import { initAuth } from '$lib/stores/auth';
-	import { loginWithKeycast, logout, restoreSession } from '$lib/auth';
-	import { registerPushNotifications } from '$lib/push';
+	import { page } from '$app/state';
+	import { isAuthenticated, authToken } from '#lib/stores/auth.ts';
+	import { initAuth } from '#lib/stores/auth.ts';
+	import { loginWithKeycast, logout, restoreSession } from '#lib/auth.ts';
+	import { registerPushNotifications } from '#lib/push.ts';
 
 	let { children } = $props();
 
@@ -40,7 +40,7 @@
 	}
 
 	function isActive(path: string): boolean {
-		return $page.url.pathname === path;
+		return page.url.pathname === path;
 	}
 
 	async function handleNotificationBell() {

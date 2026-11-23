@@ -1,5 +1,5 @@
 import type { PageLoad } from './$types';
-import { api } from '$lib/api';
+import { api } from '#lib/api.ts';
 
 export const load: PageLoad = async () => {
   try {

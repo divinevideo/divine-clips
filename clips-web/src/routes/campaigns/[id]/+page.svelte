@@ -1,10 +1,10 @@
 <script lang="ts">
   import type { PageData } from './$types';
-  import { budgetPercent, platformLabel, timeAgo, formatSats } from '$lib/utils';
-  import { isAuthenticated } from '$lib/stores/auth';
-  import { api } from '$lib/api';
+  import { budgetPercent, platformLabel, timeAgo, formatSats } from '#lib/utils.ts';
+  import { isAuthenticated } from '#lib/stores/auth.ts';
+  import { api } from '#lib/api.ts';
   import { invalidateAll } from '$app/navigation';
-  import VideoCard from '$lib/components/VideoCard.svelte';
+  import VideoCard from '#lib/components/VideoCard.svelte';
 
   let { data }: { data: PageData } = $props();
 

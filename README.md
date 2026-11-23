@@ -72,6 +72,8 @@ tests leave them ignored so a database service is not needed for unit tests.
 
 ### Frontend (`clips-web/`)
 
+Use the Node.js version in each project's `.node-version` file for the frontend and verifier builds.
+
 ```sh
 cd clips-web
 npm ci
