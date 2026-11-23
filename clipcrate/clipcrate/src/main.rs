@@ -14,6 +14,7 @@ async fn main() -> anyhow::Result<()> {
     let database_url = std::env::var("DATABASE_URL")
         .unwrap_or_else(|_| "postgres://localhost:5432/clipcrate".into());
     let clickhouse = clipcrate_db::clickhouse::ClickHouseClient::from_env()?;
+    let auto_campaign_config = clipcrate_api::auto_campaigns::AutoCampaignConfig::from_env()?;
     let port = std::env::var("PORT").unwrap_or_else(|_| "8080".into());
 
     let db = clipcrate_db::postgres::create_pool(&database_url).await?;
@@ -35,7 +36,11 @@ async fn main() -> anyhow::Result<()> {
 
     let db_for_auto = state.db.clone();
     tokio::spawn(async move {
-        clipcrate_api::auto_campaigns::run_auto_campaign_listener(db_for_auto).await;
+        clipcrate_api::auto_campaigns::run_auto_campaign_listener(
+            db_for_auto,
+            auto_campaign_config,
+        )
+        .await;
     });
 
     let app = clipcrate_api::router(state);
