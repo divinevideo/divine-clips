@@ -1,9 +1,9 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import { page } from '$app/state';
-  import { api } from '$lib/api';
-  import { PLATFORMS, platformLabel } from '$lib/utils';
-  import type { Campaign } from '$lib/types';
+  import { api } from '#lib/api.ts';
+  import { PLATFORMS, platformLabel } from '#lib/utils.ts';
+  import type { Campaign } from '#lib/types.ts';
 
   let campaigns = $state<Campaign[]>([]);
   let loadingCampaigns = $state(true);

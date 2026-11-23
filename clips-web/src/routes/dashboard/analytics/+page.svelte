@@ -1,10 +1,10 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import { api } from '$lib/api';
-	import { formatSats, formatViews, platformLabel } from '$lib/utils';
-	import { isAuthenticated, initAuth } from '$lib/stores/auth';
-	import type { AnalyticsOverview } from '$lib/types';
-	import ViewsChart from '$lib/components/charts/ViewsChart.svelte';
+	import { api } from '#lib/api.ts';
+	import { formatSats, formatViews, platformLabel } from '#lib/utils.ts';
+	import { isAuthenticated, initAuth } from '#lib/stores/auth.ts';
+	import type { AnalyticsOverview } from '#lib/types.ts';
+	import ViewsChart from '#lib/components/charts/ViewsChart.svelte';
 
 	let overview = $state<AnalyticsOverview | null>(null);
 	let loading = $state(true);

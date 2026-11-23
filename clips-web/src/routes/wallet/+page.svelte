@@ -1,10 +1,10 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import { api } from '$lib/api';
-	import { formatSats, timeAgo } from '$lib/utils';
-	import { isAuthenticated, initAuth } from '$lib/stores/auth';
-	import { loginWithKeycast } from '$lib/auth';
-	import type { TransactionRecord } from '$lib/types';
+	import { api } from '#lib/api.ts';
+	import { formatSats, timeAgo } from '#lib/utils.ts';
+	import { isAuthenticated, initAuth } from '#lib/stores/auth.ts';
+	import { loginWithKeycast } from '#lib/auth.ts';
+	import type { TransactionRecord } from '#lib/types.ts';
 
 	let balance = $state(0);
 	let transactions: TransactionRecord[] = $state([]);

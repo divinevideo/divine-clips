@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { goto } from '$app/navigation';
-	import { handleAuthCallback } from '$lib/auth';
+	import { handleAuthCallback } from '#lib/auth.ts';
 
 	let status = $state<'loading' | 'success' | 'error'>('loading');
 	let errorMessage = $state('');

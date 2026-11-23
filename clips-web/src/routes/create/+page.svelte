@@ -1,10 +1,10 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { goto } from '$app/navigation';
-	import { isAuthenticated, authToken } from '$lib/stores/auth';
-	import { api } from '$lib/api';
-	import { PLATFORMS, platformLabel, CURRENCIES, currencyToSats, formatMoney, formatCpm, type Currency } from '$lib/utils';
-	import type { CreateCampaignRequest } from '$lib/types';
+	import { isAuthenticated, authToken } from '#lib/stores/auth.ts';
+	import { api } from '#lib/api.ts';
+	import { PLATFORMS, platformLabel, CURRENCIES, currencyToSats, formatMoney, formatCpm, type Currency } from '#lib/utils.ts';
+	import type { CreateCampaignRequest } from '#lib/types.ts';
 
 	// Form fields
 	let title = $state('');

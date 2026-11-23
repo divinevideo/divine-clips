@@ -15,8 +15,7 @@ export default defineConfig({
 					return parts.includes('node_modules') ? undefined : true;
 				}
 			},
-			adapter: adapter(),
-			alias: { $lib: 'src/lib' }
+			adapter: adapter()
 		})
 	]
 });

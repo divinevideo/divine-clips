@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import { api } from '$lib/api';
+	import { api } from '#lib/api.ts';
 
 	type LeaderboardEntry = { pubkey: string; trust_level: number; value: number };
 	type SocialProof = { clippers_this_week: number; sats_earned_this_week: number };

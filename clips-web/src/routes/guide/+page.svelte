@@ -1,6 +1,6 @@
 <script lang="ts">
-	import { isAuthenticated } from '$lib/stores/auth';
-	import { loginWithKeycast } from '$lib/auth';
+	import { isAuthenticated } from '#lib/stores/auth.ts';
+	import { loginWithKeycast } from '#lib/auth.ts';
 </script>
 
 <svelte:head>

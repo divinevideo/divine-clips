@@ -1,8 +1,7 @@
 {
-	"extends": "$app/tsconfig.json",
+	"extends": "$app/tsconfig",
 	"exclude": ["node_modules", "static"],
 	"compilerOptions": {
-		"rewriteRelativeImportExtensions": true,
 		"allowJs": true,
 		"checkJs": true,
 		"esModuleInterop": true,
