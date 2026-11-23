@@ -50,10 +50,25 @@ impl AutoCampaignConfig {
         lookback_secs: Option<String>,
     ) -> Result<Self> {
         let relay_url = relay_url.unwrap_or_else(|| DEFAULT_RELAY_URL.into());
+        ensure!(
+            !relay_url.is_empty()
+                && !relay_url
+                    .chars()
+                    .any(|c| c.is_whitespace() || c.is_control()),
+            "Invalid RELAY_URL"
+        );
         let parsed = Url::parse(&relay_url).map_err(|_| anyhow!("Invalid RELAY_URL"))?;
+        let authority_has_at = relay_url
+            .split_once("://")
+            .map(|(_, rest)| {
+                let authority = rest.split(['/', '?', '#']).next().unwrap_or("");
+                authority.contains('@')
+            })
+            .unwrap_or(false);
         ensure!(
             matches!(parsed.scheme(), "ws" | "wss")
                 && parsed.host().is_some()
+                && !authority_has_at
                 && parsed.username().is_empty()
                 && parsed.password().is_none()
                 && parsed.query().is_none()
@@ -121,7 +136,8 @@ fn is_plaintext_ws_allowed_host(host: &Host<&str>) -> bool {
         Host::Ipv4(ip) => ip.is_loopback(),
         Host::Ipv6(ip) => ip.is_loopback(),
         Host::Domain(domain) => {
-            let normalized = domain.trim_end_matches('.').to_ascii_lowercase();
+            let without_root_dot = domain.strip_suffix('.').unwrap_or(domain);
+            let normalized = without_root_dot.to_ascii_lowercase();
             if normalized == "localhost" {
                 return true;
             }
@@ -131,7 +147,7 @@ fn is_plaintext_ws_allowed_host(host: &Host<&str>) -> bool {
             matches!(
                 prefix,
                 Some(p)
-                    if !p.is_empty()
+                    if p.split('.').count() >= 2
                         && p.split('.').all(|label| !label.is_empty())
             )
         }
@@ -185,7 +201,22 @@ async fn run_listener(
 ) -> Result<()> {
     let keys = Keys::generate();
     let client = Client::new(keys);
+    let session_result = run_listener_session(&client, db, config, since, cursor).await;
+    let _ = client.shutdown().await;
+    session_result
+}
+
+async fn run_listener_session(
+    client: &Client,
+    db: &PgPool,
+    config: &AutoCampaignConfig,
+    since: Timestamp,
+    cursor: &Arc<AtomicU64>,
+) -> Result<()> {
     client.add_relay(config.relay_url()).await?;
+    // Attach the notification receiver before connecting and subscribing so
+    // early events or an immediate CLOSED response cannot be dropped.
+    let mut notifications = client.notifications();
     client.connect().await;
 
     let filter = build_subscription_filter(since, config.initial_limit());
@@ -195,52 +226,58 @@ async fn run_listener(
         initial_limit = config.initial_limit(),
         "subscribing auto-campaign listener to relay"
     );
-    let sub_id = client.subscribe(vec![filter], None).await?.val;
+    let output = client.subscribe(vec![filter], None).await?;
+    ensure!(
+        !output.success.is_empty(),
+        "auto-campaign relay subscription did not succeed on any relay (failed_relays={})",
+        output.failed.len()
+    );
+    let sub_id = output.val;
 
-    let result = client
-        .handle_notifications(|notification| {
-            let cursor = Arc::clone(cursor);
-            let sub_id = sub_id.clone();
-            async move {
-                match notification {
-                    RelayPoolNotification::Event {
-                        subscription_id,
-                        event,
-                        ..
-                    } if subscription_id == sub_id && event.kind == Kind::from(VIDEO_KIND) => {
-                        match handle_video(db, &event).await {
-                            Ok(()) => {
-                                let current = Timestamp::from(cursor.load(Ordering::Relaxed));
-                                let updated =
-                                    next_since_cursor(current, event.created_at, Timestamp::now());
-                                cursor.fetch_max(updated.as_u64(), Ordering::Relaxed);
-                            }
-                            Err(e) => {
-                                tracing::error!("auto-campaign insert error: {e:#}");
-                            }
-                        }
+    loop {
+        match notifications.recv().await {
+            Ok(RelayPoolNotification::Event {
+                subscription_id,
+                event,
+                ..
+            }) if subscription_id == sub_id && event.kind == Kind::from(VIDEO_KIND) => {
+                match handle_video(db, &event).await {
+                    Ok(()) => {
+                        let current = Timestamp::from(cursor.load(Ordering::Relaxed));
+                        let updated =
+                            next_since_cursor(current, event.created_at, Timestamp::now());
+                        cursor.fetch_max(updated.as_u64(), Ordering::Relaxed);
                     }
-                    RelayPoolNotification::Message {
-                        message:
-                            RelayMessage::Closed {
-                                subscription_id,
-                                message,
-                            },
-                        ..
-                    } if subscription_id == sub_id => {
-                        tracing::warn!(reason = %message, "auto-campaign relay closed subscription");
-                        return Ok(true);
+                    Err(e) => {
+                        tracing::error!("auto-campaign insert error: {e:#}");
                     }
-                    _ => {}
                 }
-                Ok(false)
             }
-        })
-        .await;
-
-    let _ = client.disconnect().await;
-    result?;
-    Ok(())
+            Ok(RelayPoolNotification::Message {
+                message:
+                    RelayMessage::Closed {
+                        subscription_id,
+                        message,
+                    },
+                ..
+            }) if subscription_id == sub_id => {
+                tracing::warn!(reason = %message, "auto-campaign relay closed subscription");
+                return Ok(());
+            }
+            Ok(RelayPoolNotification::Shutdown) => {
+                tracing::warn!("auto-campaign relay pool shut down");
+                return Ok(());
+            }
+            Ok(_) => {}
+            Err(tokio::sync::broadcast::error::RecvError::Lagged(skipped)) => {
+                tracing::warn!(skipped, "auto-campaign notification receiver lagged");
+            }
+            Err(tokio::sync::broadcast::error::RecvError::Closed) => {
+                tracing::warn!("auto-campaign notification channel closed");
+                return Ok(());
+            }
+        }
+    }
 }
 
 async fn handle_video(db: &PgPool, event: &Event) -> Result<()> {
@@ -336,17 +373,33 @@ mod tests {
             "ws://relay.divine.video",
             "ws://example.com:7777",
             "ws://10.0.0.5:7777",
+            "ws://0.0.0.0:7777",
+            "ws://[::]:7777",
+            "ws://[::ffff:127.0.0.1]:7777",
+            "ws://[::ffff:10.0.0.1]:7777",
+            "ws://foo.svc:7777",
             "ws://.svc.cluster.local:7777",
             "ws://svc.cluster.local:7777",
             "ws://a..b.svc.cluster.local:7777",
+            "ws://localhost..:7777",
+            "ws://funnelcake-relay.funnelcake.svc..:7777",
+            "ws://localhost.evil.com:7777",
+            "ws://a.b.svc.cluster.local.evil.com:7777",
+            "wss://relay.divine.video\n",
+            "ws://loc\talhost:7777",
+            " wss://relay.divine.video ",
+            "wss://@relay.divine.video",
+            "wss://user@relay.divine.video",
+            "wss://:pass@relay.divine.video",
             "wss://user:pass@relay.divine.video",
             "wss://relay.divine.video?token=secret",
             "wss://relay.divine.video#frag",
         ] {
-            assert!(
-                AutoCampaignConfig::parse(Some(url.into()), None, None).is_err(),
-                "expected {url:?} to be rejected"
-            );
+            let err = AutoCampaignConfig::parse(Some(url.into()), None, None)
+                .expect_err(&format!("expected {url:?} to be rejected"));
+            let msg = err.to_string();
+            assert!(!msg.contains("secret"), "error leaked query value: {msg}");
+            assert!(!msg.contains("pass"), "error leaked password value: {msg}");
         }
     }
 
