@@ -1,6 +1,6 @@
 <script lang="ts">
   import { onMount } from 'svelte';
-  import { page } from '$app/stores';
+  import { page } from '$app/state';
   import { api } from '$lib/api';
   import { PLATFORMS, platformLabel } from '$lib/utils';
   import type { Campaign } from '$lib/types';
@@ -37,8 +37,8 @@
 
   onMount(async () => {
     // Pre-fill campaign and video from URL query params
-    const campaignParam = $page.url.searchParams.get('campaign');
-    const videoParam = $page.url.searchParams.get('video');
+    const campaignParam = page.url.searchParams.get('campaign');
+    const videoParam = page.url.searchParams.get('video');
 
     if (videoParam) {
       prefilledVideoId = videoParam;

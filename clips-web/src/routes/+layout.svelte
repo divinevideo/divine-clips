@@ -2,7 +2,7 @@
 	import favicon from '$lib/assets/favicon.svg';
 	import '../app.css';
 	import { onMount } from 'svelte';
-	import { page } from '$app/stores';
+	import { page } from '$app/state';
 	import { isAuthenticated, authToken } from '$lib/stores/auth';
 	import { initAuth } from '$lib/stores/auth';
 	import { loginWithKeycast, logout, restoreSession } from '$lib/auth';
@@ -40,7 +40,7 @@
 	}
 
 	function isActive(path: string): boolean {
-		return $page.url.pathname === path;
+		return page.url.pathname === path;
 	}
 
 	async function handleNotificationBell() {

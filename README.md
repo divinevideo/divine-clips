@@ -72,6 +72,8 @@ tests leave them ignored so a database service is not needed for unit tests.
 
 ### Frontend (`clips-web/`)
 
+Use Node.js 22.17 or newer from the Node.js 22 release line for the frontend and verifier.
+
 ```sh
 cd clips-web
 npm ci
