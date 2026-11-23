@@ -108,6 +108,9 @@ Services are configured through environment variables.
   SHA-256 or SHA-384 with ECDSA, or Ed25519. A bundle that breaks these rules can pass
   startup and then fail every TLS handshake.
 - `PORT` — HTTP port to listen on (default `8080`).
+- `RELAY_URL` — Nostr relay WebSocket endpoint for the auto-campaign listener (default `wss://relay.divine.video`). Whitespace, control characters, credentials, query parameters, and fragments are rejected. Non-local hosts require `wss://`; plaintext `ws://` is permitted only for loopback (`localhost`, `127.0.0.0/8`, `::1`) and Kubernetes cluster-internal service DNS (`<service>.<namespace>.svc`, `<service>.<namespace>.svc.cluster.local`), allowing in-cluster deployments to talk directly to `ws://funnelcake-relay.funnelcake.svc.cluster.local:7777` without hairpinning through the public load balancer and Cloud NAT.
+- `AUTO_CAMPAIGN_INITIAL_LIMIT` — maximum stored kind-34236 events requested before `EOSE` on startup or reconnect (default `100`, valid range `0..=1000`). Live events after `EOSE` are not capped by this limit.
+- `AUTO_CAMPAIGN_LOOKBACK_SECS` — seconds before startup to include in the initial `since` filter (default `0`, valid range `0..=86400`). Listener restarts advance `since` monotonically via a future-clamped cursor, while transient SDK-internal WebSocket reconnects remain bounded by `AUTO_CAMPAIGN_INITIAL_LIMIT`.
 - `CDK_MINT_URL` — Cashu mint endpoint used by the wallet.
 - `RUST_LOG` — tracing filter.
 
